@@ -51,7 +51,7 @@ private:
     void passSceneUniforms();
     void passShapeUniforms(RenderShapeData& shape);
     void paintScene();
-    void paintTexture(GLuint texture, bool invert, bool blur);
+    void paintTexture(GLuint texture);
 
     void makeFBO();
 

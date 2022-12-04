@@ -194,6 +194,7 @@ void Realtime::initializeGL() {
     // Students: anything requiring OpenGL calls when the program starts should be done here
     glClearColor(0, 0, 0, 1);
     m_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/texture.vert", ":/resources/shaders/texture.frag");
+    m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
 
     glUseProgram(m_texture_shader);
     glUniform1i(glGetUniformLocation(m_texture_shader, "sampler"), 0);
@@ -230,6 +231,7 @@ void Realtime::initializeGL() {
 
     makeFBO();
 
+    SceneParser::parse(settings.sceneFilePath, settings.renderData, settings.nearPlane, settings.farPlane, float(width()) / float(height()));
     updateShapeParameters();
 }
 
@@ -294,7 +296,7 @@ void Realtime::paintScene() {
 }
 
 // Applies any post-processing filters using m_texture_shader
-void Realtime::paintTexture(GLuint texture, bool invert, bool blur) {
+void Realtime::paintTexture(GLuint texture) {
     glUseProgram(m_texture_shader);
     glUniform1i(glGetUniformLocation(m_texture_shader, "fboWidth"), m_fbo_width);
     glUniform1i(glGetUniformLocation(m_texture_shader, "fboHeight"), m_fbo_height);
@@ -318,7 +320,7 @@ void Realtime::paintGL() {
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    paintTexture(m_fbo_texture, settings.perPixelFilter, settings.kernelBasedFilter);
+    paintTexture(m_fbo_texture);
 }
 
 void Realtime::resizeGL(int w, int h) {
@@ -331,28 +333,11 @@ void Realtime::resizeGL(int w, int h) {
             SceneParser::getProjectionMatrix(settings.nearPlane, settings.farPlane, cameraData.heightAngle, float(width()) / float(height()));
 }
 
-void Realtime::sceneChanged() {
-    glDeleteShader(m_shader);
-    m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
-    SceneParser::parse(settings.sceneFilePath, settings.renderData, settings.nearPlane, settings.farPlane, float(width()) / float(height()));
-
-    float adaptiveDetail = 0;
-    if (settings.extraCredit5) {
-        adaptiveDetail = log10f(settings.renderData.shapes.size());
-    }
-    updateShapeParameters();
-    update(); // asks for a PaintGL() call to occur
-}
-
 void Realtime::settingsChanged() {
     SceneCameraData cameraData = settings.renderData.cameraData;
     settings.renderData.cameraData.projectionMatrix =
             SceneParser::getProjectionMatrix(settings.nearPlane, settings.farPlane, cameraData.heightAngle, float(width()) / float(height()));
 
-    float adaptiveDetail = 0;
-    if (settings.extraCredit5) {
-        adaptiveDetail = log10f(settings.renderData.shapes.size());
-    }
     updateShapeParameters();
     update(); // asks for a PaintGL() call to occur
 }

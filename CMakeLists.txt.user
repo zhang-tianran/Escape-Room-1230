@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 8.0.1, 2022-12-04T15:34:50. -->
+<!-- Written by QtCreator 8.0.1, 2022-12-04T16:29:38. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -347,6 +347,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">final-project</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">CMakeProjectManager.CMakeRunConfiguration.final-project</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">final-project</value>
+    <value type="QString" key="RunConfiguration.Arguments">C:\Users\zacha\Documents\Brown\Fall_2022\CSCI1230\scenefiles\test_efficiency\recursiveSpheres4.xml</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>
