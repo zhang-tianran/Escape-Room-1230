@@ -16,11 +16,11 @@ void Realtime::updateShapeParameter(){
     m_sphere->updateParams(std::max(2, settings.shapeParameter1), std::max(3, settings.shapeParameter2));
     m_cone->updateParams(std::max(1, settings.shapeParameter1), std::max(3, settings.shapeParameter2));
     m_cylinder->updateParams(std::max(1, settings.shapeParameter1), std::max(3, settings.shapeParameter2));
-    verts = std::vector<std::vector<GLfloat>>();
-    verts.push_back(m_cube->generateShape());
-    verts.push_back(m_sphere->generateShape());
-    verts.push_back(m_cone->generateShape());
-    verts.push_back(m_cylinder->generateShape());
+    m_shapeVertices = std::vector<std::vector<GLfloat>>();
+    m_shapeVertices.push_back(m_cube->generateShape());
+    m_shapeVertices.push_back(m_sphere->generateShape());
+    m_shapeVertices.push_back(m_cone->generateShape());
+    m_shapeVertices.push_back(m_cylinder->generateShape());
 }
 
 void Realtime::initShapes(){
@@ -31,12 +31,11 @@ void Realtime::initShapes(){
     updateShapeParameter();
 }
 
-void Realtime::updateVbo(int idx){
-
+void Realtime::updateVBOat(int idx){
     glBindBuffer(GL_ARRAY_BUFFER, m_vbos[idx]);
 
-    GLsizeiptr size = verts[idx].size() * sizeof(float);
-    glBufferData(GL_ARRAY_BUFFER, size, verts[idx].data(), GL_STATIC_DRAW);
+    GLsizeiptr size = m_shapeVertices[idx].size() * sizeof(float);
+    glBufferData(GL_ARRAY_BUFFER, size, m_shapeVertices[idx].data(), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -48,7 +47,7 @@ void Realtime::updateVbo(int idx){
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Realtime::initVaoVbo(std::vector<GLfloat>& vert){
+void Realtime::initShapeVertexObjects(){
     GLuint vbo;
     m_vbos.push_back(vbo);
     int idx = m_vbos.size() - 1;
@@ -59,7 +58,7 @@ void Realtime::initVaoVbo(std::vector<GLfloat>& vert){
     glGenVertexArrays(1, &m_vaos[idx]);
     glBindVertexArray(m_vaos[idx]);
 
-    updateVbo(idx);
+    updateVBOat(idx);
     glBindVertexArray(0);
 }
 
@@ -67,9 +66,9 @@ void Realtime::initVaoVbo(std::vector<GLfloat>& vert){
 void Realtime::updateCamUniforms(){
     glUseProgram(m_shader);
 
-    glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_view"), 1, GL_FALSE, &cam.getViewMatrix()[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_proj"), 1, GL_FALSE, &cam.getProjection()[0][0]);
-    glm::vec4 worldCamPos = glm::vec4(cam.pos, 1.f);
+    glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_view"), 1, GL_FALSE, &m_camera.getViewMatrix()[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_proj"), 1, GL_FALSE, &m_camera.getProjection()[0][0]);
+    glm::vec4 worldCamPos = glm::vec4(m_camera.m_pos, 1.f);
     glUniform4fv(glGetUniformLocation(m_shader, "worldCamPos"), 1, &worldCamPos[0]);
 
     glUseProgram(0);
@@ -89,8 +88,8 @@ void Realtime::initSceneUniforms(){
         glUniform1f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].penumbra").c_str()), 0);
         glUniform1f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].angle").c_str()), 0);
 
-        if (i < metaData.lights.size()) {
-            const SceneLightData &light = metaData.lights[i];
+        if (i < m_metaData.lights.size()) {
+            const SceneLightData &light = m_metaData.lights[i];
             glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].color").c_str()), light.color.r, light.color.g, light.color.b, light.color.a);
             switch(light.type) {
                 case LightType::LIGHT_DIRECTIONAL:
@@ -117,9 +116,9 @@ void Realtime::initSceneUniforms(){
     }
 
     // global data
-    glUniform1f(glGetUniformLocation(m_shader, "ka"), metaData.globalData.ka);
-    glUniform1f(glGetUniformLocation(m_shader, "kd"), metaData.globalData.kd);
-    glUniform1f(glGetUniformLocation(m_shader, "ks"), metaData.globalData.ks);
+    glUniform1f(glGetUniformLocation(m_shader, "ka"), m_metaData.globalData.ka);
+    glUniform1f(glGetUniformLocation(m_shader, "kd"), m_metaData.globalData.kd);
+    glUniform1f(glGetUniformLocation(m_shader, "ks"), m_metaData.globalData.ks);
 
     glUseProgram(0);
 
@@ -203,12 +202,7 @@ void Realtime::initFbo(){
     makeFbo();
 }
 
-void Realtime::initFboFilter(){
-    glUniform1i(glGetUniformLocation(m_texture_shader, "invert"), settings.perPixelFilter);
-    glUniform1i(glGetUniformLocation(m_texture_shader, "grayscale"), settings.extraCredit1);
-    glUniform1i(glGetUniformLocation(m_texture_shader, "sharpenFilter"), settings.kernelBasedFilter);
-    glUniform1i(glGetUniformLocation(m_texture_shader, "blurFilter"), settings.extraCredit2);
-}
+void Realtime::initFboFilter() {}
 
 Realtime::Realtime(QWidget *parent)
     : QOpenGLWidget(parent)
@@ -226,7 +220,7 @@ Realtime::Realtime(QWidget *parent)
 
     // If you must use this function, do not edit anything above this
     initShapes();
-    cam = Camera();
+    m_camera = Camera();
 }
 
 void Realtime::finish() {
@@ -234,7 +228,7 @@ void Realtime::finish() {
     this->makeCurrent();
 
     // Students: anything requiring OpenGL calls when the program exits should be done here
-    for (int i = 0; i < verts.size(); i++) {
+    for (int i = 0; i < m_shapeVertices.size(); i++) {
         glDeleteBuffers(1, &m_vbos[i]);
         glDeleteVertexArrays(1, &m_vaos[i]);
     }
@@ -279,9 +273,15 @@ void Realtime::initializeGL() {
     m_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/texture.vert", ":/resources/shaders/texture.frag");
 
     // Vao/Vbo
-    for (int i = 0; i < verts.size(); i++) {
-        initVaoVbo(verts[i]);
+    for (int i = 0; i < m_shapeVertices.size(); i++) {
+        initShapeVertexObjects();
     }
+
+    // Scene
+    SceneParser::parse(settings.sceneFilePath, m_metaData);
+    m_camera.setCamData(m_metaData.cameraData);
+    m_camera.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
+    initSceneUniforms();
 
     // Fbo
     glUseProgram(m_texture_shader);
@@ -291,7 +291,7 @@ void Realtime::initializeGL() {
 }
 
 void Realtime::paintGeometry(){
-    for (RenderShapeData &obj: metaData.shapes) {
+    for (RenderShapeData &obj: m_metaData.shapes) {
         // Transformation matrices
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_model"), 1, GL_FALSE, &obj.ctm[0][0]);
         glm::mat3 inv = inverse(transpose(glm::mat3(obj.ctm)));
@@ -307,22 +307,22 @@ void Realtime::paintGeometry(){
         switch(obj.primitive.type) {
             case PrimitiveType::PRIMITIVE_CUBE:
                 glBindVertexArray(m_vaos[0]);
-                glDrawArrays(GL_TRIANGLES, 0, (int) verts[0].size() / 6);
+                glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[0].size() / 6);
                 glBindBuffer(0, m_vaos[0]);
                 break;
             case PrimitiveType::PRIMITIVE_SPHERE:
                 glBindVertexArray(m_vaos[1]);
-                glDrawArrays(GL_TRIANGLES, 0, (int) verts[1].size() / 6);
+                glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[1].size() / 6);
                 glBindBuffer(0, m_vaos[1]);
                 break;
             case PrimitiveType::PRIMITIVE_CONE:
                 glBindVertexArray(m_vaos[2]);
-                glDrawArrays(GL_TRIANGLES, 0, (int) verts[2].size() / 6);
+                glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[2].size() / 6);
                 glBindBuffer(0, m_vaos[2]);
                 break;
             case PrimitiveType::PRIMITIVE_CYLINDER:
                 glBindVertexArray(m_vaos[3]);
-                glDrawArrays(GL_TRIANGLES, 0, (int) verts[3].size() / 6);
+                glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[3].size() / 6);
                 glBindBuffer(0, m_vaos[3]);
                 break;
             default:
@@ -380,14 +380,14 @@ void Realtime::resizeGL(int w, int h) {
     m_fbo_height = m_screen_height;
     makeFbo();
 
-    cam.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
+    m_camera.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
     Realtime::updateCamUniforms();
 }
 
 void Realtime::sceneChanged() {
-    SceneParser::parse(settings.sceneFilePath, metaData);
-    cam.setCamData(metaData.cameraData);
-    cam.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
+    SceneParser::parse(settings.sceneFilePath, m_metaData);
+    m_camera.setCamData(m_metaData.cameraData);
+    m_camera.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
     initSceneUniforms();
 
     update(); // asks for a PaintGL() call to occur
@@ -395,15 +395,12 @@ void Realtime::sceneChanged() {
 
 void Realtime::settingsChanged() {
     // camera change
-    cam.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
-
-    // shape parameter change
-    updateShapeParameter();
+    m_camera.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
 
     // update if scene is loaded
     if (m_vbos.size() > 0) {
-        for (int i = 0; i < verts.size(); i++) {
-            updateVbo(i);
+        for (int i = 0; i < m_shapeVertices.size(); i++) {
+            updateVBOat(i);
         }
         Realtime::updateCamUniforms();
     }
@@ -444,11 +441,11 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
 
         // Use deltaX and deltaY here to rotate
         float angleX = (float) deltaX / width();
-        cam.setCamRotate(glm::vec3(0, 1, 0), angleX);
+        m_camera.setCamRotate(glm::vec3(0, 1, 0), angleX);
 
         float angleY = (float) deltaY / height();
-        glm::vec3 axis = glm::normalize(glm::cross(glm::vec3(cam.look), glm::vec3(cam.up)));
-        cam.setCamRotate(axis, angleY);
+        glm::vec3 axis = glm::normalize(glm::cross(glm::vec3(m_camera.m_look), glm::vec3(m_camera.m_up)));
+        m_camera.setCamRotate(axis, angleY);
 
         updateCamUniforms();
 
@@ -462,14 +459,14 @@ void Realtime::timerEvent(QTimerEvent *event) {
     m_elapsedTimer.restart();
 
     glm::vec3 translation = glm::vec3(0.f);
-    glm::vec3 xDir = glm::cross(glm::vec3(cam.look), glm::vec3(cam.up));
+    glm::vec3 xDir = glm::cross(glm::vec3(m_camera.m_look), glm::vec3(m_camera.m_up));
 
     // Use deltaTime and m_keyMap here to move around
     if (m_keyMap[Qt::Key_W]) {
-        translation += cam.look;
+        translation += m_camera.m_look;
     }
     if (m_keyMap[Qt::Key_S]) {
-        translation -= cam.look;
+        translation -= m_camera.m_look;
     }
     if (m_keyMap[Qt::Key_A]) {
         translation -= xDir;
@@ -485,7 +482,7 @@ void Realtime::timerEvent(QTimerEvent *event) {
     }
     if (translation != glm::vec3(0.f)) {
         translation *= 5.f * deltaTime;
-        cam.setCamPos(translation);
+        m_camera.setCamPos(translation);
         updateCamUniforms();
     }
     update(); // asks for a PaintGL() call to occur

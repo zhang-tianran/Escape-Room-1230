@@ -67,11 +67,11 @@ private:
     GLuint m_texture_shader;
 
     // vao/vbo
-    void initVaoVbo(std::vector<GLfloat>& vert);
-    void updateVbo(int idx);
+    void initShapeVertexObjects();
+    void updateVBOat(int idx);
     std::vector<GLuint> m_vbos;   //Stores id for vbo
     std::vector<GLuint> m_vaos;   //Stores id for vbo
-    std::vector<std::vector<GLfloat>> verts;
+    std::vector<std::vector<GLfloat>> m_shapeVertices;
 
     //fbo
     void initFbo();
@@ -89,8 +89,8 @@ private:
     void paintTexture(GLuint texture);
 
     // Scene info
-    Camera cam;
-    RenderData metaData;
+    Camera m_camera;
+    RenderData m_metaData;
     void initSceneUniforms();
     void updateCamUniforms();
 
