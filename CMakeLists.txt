@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Sets project name
-project(final-project LANGUAGES CXX C)
+project(projects_realtime LANGUAGES CXX C)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -25,13 +26,12 @@ include_directories(src)
 # Specifies .cpp and .h files to be passed to the compiler
 add_executable(${PROJECT_NAME}
     src/main.cpp
-
     src/realtime.cpp
     src/mainwindow.cpp
     src/settings.cpp
     src/utils/scenefilereader.cpp
     src/utils/sceneparser.cpp
-    src/shapes/Triangle.cpp
+    src/camera/camera.cpp
     src/shapes/Cube.cpp
     src/shapes/Sphere.cpp
     src/shapes/Cylinder.cpp
@@ -44,7 +44,7 @@ add_executable(${PROJECT_NAME}
     src/utils/scenefilereader.h
     src/utils/sceneparser.h
     src/utils/shaderloader.h
-    src/shapes/Triangle.h
+    src/camera/camera.h
     src/shapes/Cube.h
     src/shapes/Sphere.h
     src/shapes/Cylinder.h

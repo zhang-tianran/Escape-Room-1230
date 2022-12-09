@@ -1,79 +1,104 @@
 #version 330 core
 
-in vec4 wrldPosition;
-in vec3 wrldNormal;
-
-out vec4 fragColor;
-
-struct LightData
+// Light
+struct light
 {
-    int lightType; // 1 for point, 2 for directional, 3 for spotlight
-    vec4 lightPos;
-    vec4 lightDir;
-
-    float lightAngle;
+    int type; // point: 0; spot: 1; directional: 2
+    vec4 color;
+    vec4 pos;
+    vec4 dir;
+    vec3 function; // Attenuation
     float penumbra;
-
-    vec4 lightColor;
-    vec3 function; // attenuation function
+    float angle;
 };
 
+uniform light lightArr[8];
+
+// Material
+struct Material {
+   vec4 cAmbient;
+   vec4 cDiffuse;
+   vec4 cSpecular;
+   float shininess;
+};
+
+uniform Material material;
+
+// Coords
+uniform vec4 worldCamPos;
+
+in vec4 worldPos;
+in vec4 worldNorm;
+
+// Global data
 uniform float ka;
 uniform float kd;
 uniform float ks;
 
-uniform vec4 cameraPos;
+out vec4 fragColor;
 
-uniform vec4 materialAmbient;
-uniform vec4 materialDiffuse;
-uniform vec4 materialSpecular;
-uniform float shininess;
-
-uniform LightData lights[8];
-uniform int numLights;
+in vec2 uvCoordinate;
 
 void main() {
 
-    fragColor = vec4(0.0);
+    vec4 worldNormNormalized = normalize(worldNorm);
+    vec4 incomingDir = normalize(worldPos - worldCamPos);
 
-    fragColor += ka * materialAmbient;
+    vec4 ambient = ka * material.cAmbient;
+    vec4 diffusion = vec4(0.f);
+    vec4 specular = vec4(0.f);
 
-    for (int i = 0; i < 3; i++) {
-        LightData light = lights[i];
+    for (int i = 0; i < 8; i++) {
 
-        vec3 L; float attenuation;
-
-        if (light.lightType == 1) { // point
-            L = normalize(vec3(light.lightPos - wrldPosition));
-            float dist = distance(light.lightPos, wrldPosition);
-            attenuation = min(1, 1.f / (light.function[0] + dist * light.function[1] + pow(dist, 2) * light.function[2]));
-        } else if (lights[i].lightType == 2) { // directional
-            L = normalize(vec3(-light.lightDir));
-            attenuation = 1;
-        } else if (lights[i].lightType == 3) { // spotlight
-            L = normalize(vec3(light.lightPos - wrldPosition));
-            float x = acos(min(1, max(-1, dot(-L, normalize(vec3(light.lightDir))))));
-            float outer = light.lightAngle;
-            float inner = light.lightAngle - light.penumbra;
-            float falloff;
-            if (x > outer) falloff = 1;
-            else if (x > inner) falloff = -2 * pow((x - inner) / (outer - inner), 3) +
-                    3 * pow((x - inner) / (outer - inner), 2);
-            else falloff = 0;
-
-            float dist = distance(light.lightPos, wrldPosition);
-            attenuation = (1 - falloff) * min(1, 1.f / (light.function[0] + dist * light.function[1] + pow(dist, 2) * light.function[2]));
+        if (lightArr[i].type > 2) {
+            continue;
         }
 
-        vec3 N = normalize(wrldNormal);
+        // Light direction
+        vec4 lightDir;
 
-        float dotProd = max(dot(N, L), 0);
-        fragColor += attenuation * light.lightColor * kd * materialDiffuse * dotProd;
+        if (lightArr[i].type == 2) {
+            lightDir = normalize(lightArr[i].dir);
+        } else {
+            lightDir = normalize(worldPos - lightArr[i].pos);
+        }
 
-        vec3 R = 2 * dotProd * N - L;
-        vec3 V = normalize(vec3(cameraPos - wrldPosition));
-        float RV = max(dot(R, V), 0);
+        // Diffusion and specular
+        vec4 temp_d = kd * material.cDiffuse * lightArr[i].color * clamp(dot(-lightDir, worldNormNormalized), 0.0, 1.0);
+        vec4 temp_s = vec4(0.f);
+        if (material.shininess > 0) {
+            vec4 reflectDir = normalize(reflect(-lightDir, worldNormNormalized));
+            temp_s += ks * material.cSpecular * lightArr[i].color * pow(clamp(dot(reflectDir, incomingDir), 0.0, 1.0), material.shininess);
+        }
 
-        fragColor += attenuation * light.lightColor * ks * materialSpecular * max(pow(RV, shininess), 0);
+        // Attenuation
+        if (lightArr[i].type == 0 || lightArr[i].type == 1) {
+            float d = distance(worldPos, lightArr[i].pos);
+            float f = 1.f / (lightArr[i].function[0] + d * lightArr[i].function[1] + d * d * lightArr[i].function[2]);
+            temp_d *= f;
+            temp_s *= f;
+        }
+
+        // Falloff
+        if (lightArr[i].type == 1) {
+            float x = abs(acos(dot(lightArr[i].dir, lightDir) / length(lightArr[i].dir) / length(lightDir)));
+            float inner = lightArr[i].angle - lightArr[i].penumbra;
+            float falloff;
+            if (x <= inner){
+                falloff = 1.f;
+            } else if (x <= lightArr[i].angle) {
+                falloff = -2.f * pow((x - inner) / lightArr[i].penumbra, 3) + 3.f * pow((x - inner) / lightArr[i].penumbra, 2);
+                falloff = 1.f - falloff;
+            } else {
+                falloff = 0.f;
+            }
+            temp_d *= falloff;
+            temp_s *= falloff;
+        }
+        diffusion += temp_d;
+        specular += temp_s;
     }
+
+
+    fragColor = vec4(vec3(ambient + diffusion + specular), 1.0);
 }

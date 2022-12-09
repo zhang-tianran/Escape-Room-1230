@@ -70,10 +70,6 @@ struct SceneCameraData {
 
     float aperture;      // Only applicable for depth of field
     float focalLength;   // Only applicable for depth of field
-
-    glm::mat4 viewMatrix;
-    glm::mat4 inverseViewMatrix;
-    glm::mat4 projectionMatrix;
 };
 
 // Struct which contains data for texture mapping files
@@ -155,3 +151,4 @@ struct SceneNode {
    std::vector<ScenePrimitive*>      primitives;
    std::vector<SceneNode*>           children;
 };
+

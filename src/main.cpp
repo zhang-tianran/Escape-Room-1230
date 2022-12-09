@@ -5,8 +5,6 @@
 #include <iostream>
 #include <QSettings>
 
-#include "settings.h";
-
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
@@ -19,7 +17,6 @@ int main(int argc, char *argv[]) {
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(fmt);
 
-    settings.sceneFilePath = QCoreApplication::arguments().at(1).toStdString();
     MainWindow w;
     w.initialize();
     w.resize(800, 600);

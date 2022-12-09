@@ -1,47 +1,38 @@
-# Projects 5 & 6: Lights, Camera & Action!
+# Project Realtime
 
-All project handouts can be found [here](https://cs1230.graphics/projects).
+**Known Bugs:** n/a
 
+**Overview**: this project applies trimesh and phong lighting to render a scene using OpenGL pipeline. 
 
+## Lights, Camera
+- Implementation steps: 
+    1. Parse the scene. 
+    2. Create shapes consisted of vertices and normals
+    3. Establish VAO/VBO objects for shapes
+    4. Establish camera with view and projection matrices
+    5. Establish shaders and pass in uniforms containing scene information
+    6. Compute Phong lighting within fragment shader using light and object material information
+- Shapes: 
+    - This project supports Cube, Sphere, Cone, and Cylinder
+    - The shapes are established using Triangle tiles. The shape approximation is controled by 2 changable parameters. 
+- VAO/VBO: 
+    - The object contains 4 VAOs and 4 VBOs, each corresponds to a shape
+- Shaders: 
+    - This project contains vertex and fragment shaders
+    - The shaders support Phong illumination with ambient, diffuse, and specular
 
-## Project 6
+## Action!
+- Camera Interactability
+    - Translational movement: the user could navigate through the scene through keyboard control
+    - Rotational movement: the user could use mouse click events to change the view window. 
+- Lights: 
+    - The project supports 8 lights in total through Phone illumination. The light types include directional light, point light, and spot light. 
+- FBOs
+    - Per-Pixel Filter: invert
+    - Kernel-Based Filter: sharpen
 
-### Overall Design
+**Extra Credit**
 
-For this part of the project, I added 2 new shaders: on top of the original 2 for rendering the
-scene, there are 2 additional shaders to handle the framebuffers.
-
-To handle camera movement, I check which keys have been held down in the last update window,
-calculate a direction in camera space based off of this and use the previous view matrix to
-transform the movement direction to world space. Once in world space, I normalize the vector and
-then scale it to correspond to 5 world-space units per second based on deltaTime. I then update the
-camera's `pos` data accordingly and then rerender the scene using the updated camera position.
-
-The camera rotation is similar, where instead of calculating a movement direction, I calculate the
-rotation matrix corresponding to the mouse movement. I then apply this rotation to each of the
-camera's original `pos`, `look`, and `up` values to get the updated ones, which are then used to
-calculate the updated view matrix after rotation.
-
-Finally, FBOs are implemented largely the same as in lab 11: the scene is rendered to `m_fbo` first,
-which has the `m_fbo_texture` texture attachment. This texture attachment is rendered using
-`m_texture_shader`, which applies the filters as selected in the settings.
-
-### Changing the Default Framebuffer
-
-On line 32 in `realtime.cpp`, modify the value that `m_defaultFBO` is being set to.
-
-### Extra Credit
-
-I implemented 5 items on the extra credit list for this homework:
-
-- Extra credit 1: PER-PIXEL Grayscale filter. Implementation in `texture.frag`.
-
-- Extra credit 2: KERNEL-BASED Sharpen filter. Implementation in `texture.frag`.
-
-- Extra credit 3: PER-PIXEL Sepia filter. Implementation in `texture.frag`.
-
-- Extra credit 4: KERNEL-BASED Vertical sobel filter. Implementation in `texture.frag`.
-
-- Extra credit 5: PROJECT 5 Adaptive level of detail. Implementation in `realtime.cpp`, in functions
-  `update<Shape>Data` on lines 65-98`. Shape parameters are scaled down in an inversely logarithmic
-relation to the number of total shapes in the scene.
+Additional filters: 
+1. Grayscale (extra credit 1)
+2. Blurring (extra credit 2)

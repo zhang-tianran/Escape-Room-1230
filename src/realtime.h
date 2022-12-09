@@ -13,7 +13,13 @@
 #include <QTime>
 #include <QTimer>
 
+#include "camera/camera.h"
 #include "utils/sceneparser.h"
+#include "shapes/Cube.h"
+#include "shapes/Sphere.h"
+#include "shapes/Cylinder.h"
+#include "shapes/Cone.h"
+
 
 class Realtime : public QOpenGLWidget
 {
@@ -39,22 +45,6 @@ private:
     void mouseMoveEvent(QMouseEvent *event) override;
     void timerEvent(QTimerEvent *event) override;
 
-    void updateSphereData(int shapeParam1, int shapeParam2);
-    void updateCubeData(int shapeParam1);
-    void updateConeData(int shapeParam1, int shapeParam2);
-    void updateCylinderData(int shapeParam1, int shapeParam2);
-
-    void updateShapeParameters();
-
-    void bindShapeData();
-    void passLightsUniforms();
-    void passSceneUniforms();
-    void passShapeUniforms(RenderShapeData& shape);
-    void paintScene();
-    void paintTexture(GLuint texture);
-
-    void makeFBO();
-
     // Tick Related Variables
     int m_timer;                                        // Stores timer which attempts to run ~60 times per second
     QElapsedTimer m_elapsedTimer;                       // Stores timer which keeps track of actual time between frames
@@ -66,30 +56,49 @@ private:
 
     // Device Correction Variables
     int m_devicePixelRatio;
+    GLuint m_defaultFBO;
+    int m_fbo_width;
+    int m_fbo_height;
+    int m_screen_width;
+    int m_screen_height;
 
-
-    GLuint m_shader;     // Stores id of shader program
+    // Shader
+    GLuint m_shader;
     GLuint m_texture_shader;
 
-    GLuint m_sphere_vbo; // Stores id of vbo
-    GLuint m_sphere_vao; // Stores id of vao
-    std::vector<float> m_sphereData;
-    GLuint m_cube_vbo; // Stores id of vbo
-    GLuint m_cube_vao; // Stores id of vao
-    std::vector<float> m_cubeData;
-    GLuint m_cylinder_vbo; // Stores id of vbo
-    GLuint m_cylinder_vao; // Stores id of vao
-    std::vector<float> m_cylinderData;
-    GLuint m_cone_vbo; // Stores id of vbo
-    GLuint m_cone_vao; // Stores id of vao
-    std::vector<float> m_coneData;
+    // vao/vbo
+    void initVaoVbo(std::vector<GLfloat>& vert);
+    void updateVbo(int idx);
+    std::vector<GLuint> m_vbos;   //Stores id for vbo
+    std::vector<GLuint> m_vaos;   //Stores id for vbo
+    std::vector<std::vector<GLfloat>> verts;
 
-    GLuint m_fbo_texture;
-    GLuint m_fbo_height;
-    GLuint m_fbo_width;
-    GLuint m_fbo_renderbuffer;
-    GLuint m_fbo;
-    GLuint m_defaultFBO;
+    //fbo
+    void initFbo();
+    void makeFbo();
+    void initFboFilter();
+    void deleteFbo();
     GLuint m_fullscreen_vbo;
     GLuint m_fullscreen_vao;
+    GLuint m_fbo;
+    GLuint m_fbo_texture;
+    GLuint m_fbo_renderbuffer;
+
+    // paint
+    void paintGeometry();
+    void paintTexture(GLuint texture);
+
+    // Scene info
+    Camera cam;
+    RenderData metaData;
+    void initSceneUniforms();
+    void updateCamUniforms();
+
+    // Shapes
+    void updateShapeParameter();
+    void initShapes();
+    Cube* m_cube;
+    Sphere* m_sphere;
+    Cylinder* m_cylinder;
+    Cone* m_cone;
 };

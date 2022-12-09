@@ -5,13 +5,210 @@
 #include <QKeyEvent>
 #include <iostream>
 #include "settings.h"
-#include "shapes/Cone.h"
-#include "shapes/Cube.h"
-#include "shapes/Cylinder.h"
-#include "shapes/Sphere.h"
 #include "utils/shaderloader.h"
+#include "utils/sceneparser.h"
+#include <glm/gtx/string_cast.hpp>
 
 // ================== Project 5: Lights, Camera
+
+void Realtime::updateShapeParameter(){
+    m_cube->updateParams(std::max(1, settings.shapeParameter1));
+    m_sphere->updateParams(std::max(2, settings.shapeParameter1), std::max(3, settings.shapeParameter2));
+    m_cone->updateParams(std::max(1, settings.shapeParameter1), std::max(3, settings.shapeParameter2));
+    m_cylinder->updateParams(std::max(1, settings.shapeParameter1), std::max(3, settings.shapeParameter2));
+    verts = std::vector<std::vector<GLfloat>>();
+    verts.push_back(m_cube->generateShape());
+    verts.push_back(m_sphere->generateShape());
+    verts.push_back(m_cone->generateShape());
+    verts.push_back(m_cylinder->generateShape());
+}
+
+void Realtime::initShapes(){
+    m_cube = new Cube();
+    m_sphere = new Sphere();
+    m_cylinder = new Cylinder();
+    m_cone = new Cone();
+    updateShapeParameter();
+}
+
+void Realtime::updateVbo(int idx){
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbos[idx]);
+
+    GLsizeiptr size = verts[idx].size() * sizeof(float);
+    glBufferData(GL_ARRAY_BUFFER, size, verts[idx].data(), GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), reinterpret_cast<void *>(0));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), reinterpret_cast<void *>(6 * sizeof(GLfloat)));
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Realtime::initVaoVbo(std::vector<GLfloat>& vert){
+    GLuint vbo;
+    m_vbos.push_back(vbo);
+    int idx = m_vbos.size() - 1;
+    glGenBuffers(1, &m_vbos[idx]);
+
+    GLuint vao;
+    m_vaos.push_back(vao);
+    glGenVertexArrays(1, &m_vaos[idx]);
+    glBindVertexArray(m_vaos[idx]);
+
+    updateVbo(idx);
+    glBindVertexArray(0);
+}
+
+// camera
+void Realtime::updateCamUniforms(){
+    glUseProgram(m_shader);
+
+    glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_view"), 1, GL_FALSE, &cam.getViewMatrix()[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_proj"), 1, GL_FALSE, &cam.getProjection()[0][0]);
+    glm::vec4 worldCamPos = glm::vec4(cam.pos, 1.f);
+    glUniform4fv(glGetUniformLocation(m_shader, "worldCamPos"), 1, &worldCamPos[0]);
+
+    glUseProgram(0);
+}
+
+void Realtime::initSceneUniforms(){
+
+    glUseProgram(m_shader);
+
+    // light
+    for (int i = 0; i < 8; i++) {
+        glUniform1i(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].type").c_str()), 3);
+        glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].color").c_str()), 0, 0, 0, 0);
+        glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].dir").c_str()), 0, 0, 0, 0);
+        glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].pos").c_str()), 0, 0, 0, 0);
+        glUniform3f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].function").c_str()), 0, 0, 0);
+        glUniform1f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].penumbra").c_str()), 0);
+        glUniform1f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].angle").c_str()), 0);
+
+        if (i < metaData.lights.size()) {
+            const SceneLightData &light = metaData.lights[i];
+            glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].color").c_str()), light.color.r, light.color.g, light.color.b, light.color.a);
+            switch(light.type) {
+                case LightType::LIGHT_DIRECTIONAL:
+                    glUniform1i(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].type").c_str()), 2);
+                    glUniform4fv(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].dir").c_str()), 1, &light.dir[0]);
+                    break;
+                case LightType::LIGHT_POINT:
+                    glUniform1i(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].type").c_str()), 0);
+                    glUniform4fv(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].pos").c_str()), 1, &light.pos[0]);
+                    glUniform3fv(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].function").c_str()), 1, &light.function[0]);
+                    break;
+                case LightType::LIGHT_SPOT:
+                    glUniform1i(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].type").c_str()), 1);
+                    glUniform4fv(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].dir").c_str()), 1, &light.dir[0]);
+                    glUniform4fv(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].pos").c_str()), 1, &light.pos[0]);
+                    glUniform3fv(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].function").c_str()), 1, &light.function[0]);
+                    glUniform1f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].penumbra").c_str()), light.penumbra);
+                    glUniform1f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].angle").c_str()), light.angle);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    // global data
+    glUniform1f(glGetUniformLocation(m_shader, "ka"), metaData.globalData.ka);
+    glUniform1f(glGetUniformLocation(m_shader, "kd"), metaData.globalData.kd);
+    glUniform1f(glGetUniformLocation(m_shader, "ks"), metaData.globalData.ks);
+
+    glUseProgram(0);
+
+    updateCamUniforms();
+}
+
+void Realtime::makeFbo(){
+    // Set uniform for kernel-based filter
+    glUseProgram(m_texture_shader);
+    glm::vec2 dudv = glm::vec2(1.f / size().width(), 1.f / size().height());
+    glUniform2fv(glGetUniformLocation(m_texture_shader, "dudv"), 1, &dudv[0]);
+    glUseProgram(0);
+
+    // Generate and bind an empty texture, set its min/mag filter interpolation, then unbind
+    glGenTextures(1, &m_fbo_texture);
+    glBindTexture(GL_TEXTURE_2D, m_fbo_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Generate and bind a renderbuffer of the right size, set its format, then unbind
+    glGenRenderbuffers(1, &m_fbo_renderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_fbo_renderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_fbo_width, m_fbo_height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // Generate and bind an FBO
+    glGenFramebuffers(1, &m_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+
+    // Add texture as a color attachment, and our renderbuffer as a depth+stencil attachment, to our FBO
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_fbo_texture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_fbo_renderbuffer);
+
+    // Unbind the FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+}
+
+void Realtime::initFbo(){
+    // height and width data
+    m_defaultFBO = 2;
+    m_screen_width = size().width() * m_devicePixelRatio;
+    m_screen_height = size().height() * m_devicePixelRatio;
+    m_fbo_width = m_screen_width;
+    m_fbo_height = m_screen_height;
+
+    std::vector<GLfloat> fullscreen_quad_data =
+    { //     POSITIONS    //
+        -1.f,  1.f, 0.0f,
+         0.f,  1.f,
+        -1.f, -1.f, 0.0f,
+         0.f,  0.f,
+         1.f, -1.f, 0.0f,
+         1.f,  0.f,
+         1.f,  1.f, 0.0f,
+         1.f,  1.f,
+        -1.f,  1.f, 0.0f,
+         0.f,  1.f,
+         1.f, -1.f, 0.0f,
+         1.f,  0.f,
+    };
+
+    // Generate and bind a VBO and a VAO for a fullscreen quad
+    glGenBuffers(1, &m_fullscreen_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_fullscreen_vbo);
+    glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size()*sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &m_fullscreen_vao);
+    glBindVertexArray(m_fullscreen_vao);
+
+    // Task 14: modify the code below to add a second attribute to the vertex attribute array
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void*>(0 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void*>(3 * sizeof(GLfloat)));
+
+    // Unbind the fullscreen quad's VBO and VAO
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    makeFbo();
+}
+
+void Realtime::initFboFilter(){
+    glUniform1i(glGetUniformLocation(m_texture_shader, "invert"), settings.perPixelFilter);
+    glUniform1i(glGetUniformLocation(m_texture_shader, "grayscale"), settings.extraCredit1);
+    glUniform1i(glGetUniformLocation(m_texture_shader, "sharpenFilter"), settings.kernelBasedFilter);
+    glUniform1i(glGetUniformLocation(m_texture_shader, "blurFilter"), settings.extraCredit2);
+}
 
 Realtime::Realtime(QWidget *parent)
     : QOpenGLWidget(parent)
@@ -28,7 +225,8 @@ Realtime::Realtime(QWidget *parent)
     m_keyMap[Qt::Key_Space]   = false;
 
     // If you must use this function, do not edit anything above this
-    m_defaultFBO = 2;
+    initShapes();
+    cam = Camera();
 }
 
 void Realtime::finish() {
@@ -36,141 +234,24 @@ void Realtime::finish() {
     this->makeCurrent();
 
     // Students: anything requiring OpenGL calls when the program exits should be done here
-
+    for (int i = 0; i < verts.size(); i++) {
+        glDeleteBuffers(1, &m_vbos[i]);
+        glDeleteVertexArrays(1, &m_vaos[i]);
+    }
+    deleteFbo();
     glDeleteProgram(m_shader);
-
-    glDeleteBuffers(1, &m_sphere_vbo);
-    glDeleteBuffers(1, &m_cube_vbo);
-    glDeleteBuffers(1, &m_cone_vbo);
-    glDeleteBuffers(1, &m_cylinder_vbo);
-    glDeleteBuffers(1, &m_fullscreen_vbo);
-
-    glDeleteVertexArrays(1, &m_sphere_vao);
-    glDeleteVertexArrays(1, &m_cube_vao);
-    glDeleteVertexArrays(1, &m_cone_vao);
-    glDeleteVertexArrays(1, &m_cylinder_vao);
-    glDeleteVertexArrays(1, &m_fullscreen_vao);
-
     glDeleteProgram(m_texture_shader);
-    glDeleteTextures(1, &m_fbo_texture);
-    glDeleteRenderbuffers(1, &m_fbo_renderbuffer);
-    glDeleteFramebuffers(1, &m_fbo);
+
+    delete m_sphere;
+    delete m_cone;
+    delete m_cube;
+    delete m_cylinder;
 
     this->doneCurrent();
 }
 
-void Realtime::updateSphereData(int shapeParam1, int shapeParam2) {
-    Sphere sphere = Sphere{};
-    sphere.updateParams(shapeParam1, shapeParam2);
-    m_sphereData = sphere.generateShape();
-}
-
-void Realtime::updateCubeData(int shapeParam1) {
-    Cube cube = Cube{};
-    cube.updateParams(shapeParam1);
-    m_cubeData = cube.generateShape();
-}
-
-void Realtime::updateConeData(int shapeParam1, int shapeParam2) {
-    Cone cone = Cone{};
-    cone.updateParams(shapeParam1, shapeParam2);
-    m_coneData = cone.generateShape();
-}
-
-void Realtime::updateCylinderData(int shapeParam1, int shapeParam2) {
-    Cylinder cylinder = Cylinder{};
-    cylinder.updateParams(shapeParam1, shapeParam2);
-    m_cylinderData = cylinder.generateShape();
-}
-
-// Updates the stored vertex data for each shape based on given shape parameters
-void Realtime::updateShapeParameters() {
-    updateSphereData(settings.shapeParameter1, settings.shapeParameter2);
-    updateCubeData(settings.shapeParameter1);
-    updateConeData(settings.shapeParameter1, settings.shapeParameter2);
-    updateCylinderData(settings.shapeParameter1, settings.shapeParameter2);
-}
-
-// Passes uniforms to the current shader for up to 8 lights
-void Realtime::passLightsUniforms() {
-    for (int i = 0; i < 8 && i < settings.renderData.lights.size(); i++) {
-        GLint lightTypeLoc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(i) + "].lightType").c_str());
-        GLint lightPosLoc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(i) + "].lightPos").c_str());
-        GLint lightDirLoc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(i) + "].lightDir").c_str());
-        GLint lightColorLoc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(i) + "].lightColor").c_str());
-        GLint lightFuncLoc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(i) + "].function").c_str());
-        GLint lightAngleLoc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(i) + "].lightAngle").c_str());
-        GLint lightPenumbraLoc = glGetUniformLocation(m_shader, ("lights[" + std::to_string(i) + "].penumbra").c_str());
-
-        if (settings.renderData.lights[i].type == LightType::LIGHT_POINT) {
-            glUniform1i(lightTypeLoc, 1);
-        } else if (settings.renderData.lights[i].type == LightType::LIGHT_DIRECTIONAL) {
-            glUniform1i(lightTypeLoc, 2);
-        } else if (settings.renderData.lights[i].type == LightType::LIGHT_SPOT) {
-            glUniform1i(lightTypeLoc, 3);
-        }
-
-        glUniform4fv(lightPosLoc, 1, &settings.renderData.lights[i].pos[0]);
-        glUniform4fv(lightDirLoc, 1, &settings.renderData.lights[i].dir[0]);
-        glUniform4fv(lightColorLoc, 1, &settings.renderData.lights[i].color[0]);
-        glUniform3fv(lightFuncLoc, 1, &settings.renderData.lights[i].function[0]);
-        glUniform1f(lightAngleLoc, settings.renderData.lights[i].angle);
-        glUniform1f(lightPenumbraLoc, settings.renderData.lights[i].penumbra);
-    }
-    glUniform1i(glGetUniformLocation(m_shader, "numLights"), std::min(int(settings.renderData.lights.size()), 8));
-}
-
-// Updates the shape VAOs with the stored vertex data for each shape
-void Realtime::bindShapeData() {
-    glGenBuffers(1, &m_sphere_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_sphere_vbo);
-    glBufferData(GL_ARRAY_BUFFER, m_sphereData.size() * sizeof(GLfloat), m_sphereData.data(), GL_STATIC_DRAW);
-    glGenVertexArrays(1, &m_sphere_vao);
-    glBindVertexArray(m_sphere_vao);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(0));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
-
-    glGenBuffers(1, &m_cylinder_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_cylinder_vbo);
-    glBufferData(GL_ARRAY_BUFFER, m_cylinderData.size() * sizeof(GLfloat), m_cylinderData.data(), GL_STATIC_DRAW);
-    glGenVertexArrays(1, &m_cylinder_vao);
-    glBindVertexArray(m_cylinder_vao);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(0));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
-
-    glGenBuffers(1, &m_cube_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_cube_vbo);
-    glBufferData(GL_ARRAY_BUFFER, m_cubeData.size() * sizeof(GLfloat), m_cubeData.data(), GL_STATIC_DRAW);
-    glGenVertexArrays(1, &m_cube_vao);
-    glBindVertexArray(m_cube_vao);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(0));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
-
-    glGenBuffers(1, &m_cone_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_cone_vbo);
-    glBufferData(GL_ARRAY_BUFFER, m_coneData.size() * sizeof(GLfloat), m_coneData.data(), GL_STATIC_DRAW);
-    glGenVertexArrays(1, &m_cone_vao);
-    glBindVertexArray(m_cone_vao);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(0));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
-
-    // Clean-up bindings
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER,0);
-}
-
 void Realtime::initializeGL() {
     m_devicePixelRatio = this->devicePixelRatio();
-    m_fbo_width = size().width() * m_devicePixelRatio;
-    m_fbo_height = size().height() * m_devicePixelRatio;
 
     m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
@@ -193,134 +274,98 @@ void Realtime::initializeGL() {
 
     // Students: anything requiring OpenGL calls when the program starts should be done here
     glClearColor(0, 0, 0, 1);
-    m_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/texture.vert", ":/resources/shaders/texture.frag");
-    m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
 
+    m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
+    m_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/texture.vert", ":/resources/shaders/texture.frag");
+
+    // Vao/Vbo
+    for (int i = 0; i < verts.size(); i++) {
+        initVaoVbo(verts[i]);
+    }
+
+    // Fbo
     glUseProgram(m_texture_shader);
     glUniform1i(glGetUniformLocation(m_texture_shader, "sampler"), 0);
-
-    std::vector<GLfloat> fullscreen_quad_data =
-    { //     POSITIONS    //
-     -1.0f,  1.0f, 0.0f,
-      0.0f,  1.0f,
-     -1.0f, -1.0f, 0.0f,
-      0.0f,  0.0f,
-      1.0f, -1.0f, 0.0f,
-      1.0f,  0.0f,
-      1.0f,  1.0f, 0.0f,
-      1.0f,  1.0f,
-     -1.0f,  1.0f, 0.0f,
-      0.0f,  1.0f,
-      1.0f, -1.0f, 0.0f,
-      1.0f,  0.0f
-    };
-
-    glGenBuffers(1, &m_fullscreen_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_fullscreen_vbo);
-    glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size()*sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
-    glGenVertexArrays(1, &m_fullscreen_vao);
-    glBindVertexArray(m_fullscreen_vao);
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(0));
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    makeFBO();
-
-    SceneParser::parse(settings.sceneFilePath, settings.renderData, settings.nearPlane, settings.farPlane, float(width()) / float(height()));
-    updateShapeParameters();
+    glUseProgram(0);
+    initFbo();
 }
 
-// Passes uniforms to the current shader for camera and globals
-void Realtime::passSceneUniforms() {
-    glm::vec4 worldCameraPos = settings.renderData.cameraData.inverseViewMatrix * glm::vec4(0, 0, 0, 1);
+void Realtime::paintGeometry(){
+    for (RenderShapeData &obj: metaData.shapes) {
+        // Transformation matrices
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_model"), 1, GL_FALSE, &obj.ctm[0][0]);
+        glm::mat3 inv = inverse(transpose(glm::mat3(obj.ctm)));
+        glUniformMatrix3fv(glGetUniformLocation(m_shader, "m_norm"), 1, GL_FALSE, &inv[0][0]);
 
-    glUniform4fv(glGetUniformLocation(m_shader, "cameraPos"), 1, &worldCameraPos[0]);
-    glUniformMatrix4fv(glGetUniformLocation(m_shader, "view"), 1, GL_FALSE, &settings.renderData.cameraData.viewMatrix[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(m_shader, "proj"), 1, GL_FALSE, &settings.renderData.cameraData.projectionMatrix[0][0]);
+        // Material
+        SceneMaterial material = obj.primitive.material;
+        glUniform4f(glGetUniformLocation(m_shader, "material.cAmbient"), material.cAmbient.r, material.cAmbient.g, material.cAmbient.b, material.cAmbient.a);
+        glUniform4f(glGetUniformLocation(m_shader, "material.cDiffuse"), material.cDiffuse.r, material.cDiffuse.g, material.cDiffuse.b, material.cDiffuse.a);
+        glUniform4f(glGetUniformLocation(m_shader, "material.cSpecular"), material.cSpecular.r, material.cSpecular.g, material.cSpecular.b, material.cSpecular.a);
+        glUniform1f(glGetUniformLocation(m_shader, "material.shininess"), material.shininess);
 
-    glUniform1f(glGetUniformLocation(m_shader, "ka"), settings.renderData.globalData.ka);
-    glUniform1f(glGetUniformLocation(m_shader, "kd"), settings.renderData.globalData.kd);
-    glUniform1f(glGetUniformLocation(m_shader, "ks"), settings.renderData.globalData.ks);
-}
-
-// Passes uniforms to the current shader for a shape
-void Realtime::passShapeUniforms(RenderShapeData& shape) {
-    glUniformMatrix4fv(glGetUniformLocation(m_shader, "model"), 1, GL_FALSE, &shape.ctm[0][0]);
-    glUniformMatrix3fv(glGetUniformLocation(m_shader, "invTModel"), 1, GL_FALSE, &shape.invTCtm[0][0]);
-
-    glUniform4fv(glGetUniformLocation(m_shader, "materialAmbient"), 1, &shape.primitive.material.cAmbient[0]);
-    glUniform4fv(glGetUniformLocation(m_shader, "materialDiffuse"), 1, &shape.primitive.material.cDiffuse[0]);
-    glUniform4fv(glGetUniformLocation(m_shader, "materialSpecular"), 1, &shape.primitive.material.cSpecular[0]);
-    glUniform1f(glGetUniformLocation(m_shader, "shininess"), shape.primitive.material.shininess);
-}
-
-// Paints the scene by calling glDrawArrays for each shape in the scene
-void Realtime::paintScene() {
-    glUseProgram(m_shader);
-
-    bindShapeData();
-
-    passSceneUniforms();
-    for (RenderShapeData& shape : settings.renderData.shapes) {
-        passShapeUniforms(shape);
-        passLightsUniforms();
-
-        switch(shape.primitive.type) {
-            case PrimitiveType::PRIMITIVE_SPHERE:
-                glBindVertexArray(m_sphere_vao);
-                glDrawArrays(GL_TRIANGLES, 0, m_sphereData.size() / 6);
-                break;
+        switch(obj.primitive.type) {
             case PrimitiveType::PRIMITIVE_CUBE:
-                glBindVertexArray(m_cube_vao);
-                glDrawArrays(GL_TRIANGLES, 0, m_cubeData.size() / 6);
+                glBindVertexArray(m_vaos[0]);
+                glDrawArrays(GL_TRIANGLES, 0, (int) verts[0].size() / 6);
+                glBindBuffer(0, m_vaos[0]);
+                break;
+            case PrimitiveType::PRIMITIVE_SPHERE:
+                glBindVertexArray(m_vaos[1]);
+                glDrawArrays(GL_TRIANGLES, 0, (int) verts[1].size() / 6);
+                glBindBuffer(0, m_vaos[1]);
                 break;
             case PrimitiveType::PRIMITIVE_CONE:
-                glBindVertexArray(m_cone_vao);
-                glDrawArrays(GL_TRIANGLES, 0, m_coneData.size() / 6);
+                glBindVertexArray(m_vaos[2]);
+                glDrawArrays(GL_TRIANGLES, 0, (int) verts[2].size() / 6);
+                glBindBuffer(0, m_vaos[2]);
                 break;
             case PrimitiveType::PRIMITIVE_CYLINDER:
-                glBindVertexArray(m_cylinder_vao);
-                glDrawArrays(GL_TRIANGLES, 0, m_cylinderData.size() / 6);
+                glBindVertexArray(m_vaos[3]);
+                glDrawArrays(GL_TRIANGLES, 0, (int) verts[3].size() / 6);
+                glBindBuffer(0, m_vaos[3]);
                 break;
             default:
                 break;
         }
     }
-    glBindVertexArray(0);
-    glUseProgram(0);
 }
 
-// Applies any post-processing filters using m_texture_shader
-void Realtime::paintTexture(GLuint texture) {
-    glUseProgram(m_texture_shader);
-    glUniform1i(glGetUniformLocation(m_texture_shader, "fboWidth"), m_fbo_width);
-    glUniform1i(glGetUniformLocation(m_texture_shader, "fboHeight"), m_fbo_height);
-
+void Realtime::paintTexture(GLuint texture){
     glBindVertexArray(m_fullscreen_vao);
-    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
-    glUseProgram(0);
 }
 
 void Realtime::paintGL() {
+    // Students: anything requiring OpenGL calls every frame should be done here
+
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, m_fbo_width, m_fbo_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    paintScene();
 
+    // paint geometry
+    glUseProgram(m_shader);
+    paintGeometry();
+
+    // paint texture
+    glUseProgram(m_texture_shader);
+    initFboFilter();
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
-    glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
+    glViewport(0, 0, m_screen_width, m_screen_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     paintTexture(m_fbo_texture);
+
+    glUseProgram(0);
+}
+
+void Realtime::deleteFbo(){
+    glDeleteTextures(1, &m_fbo_texture);
+    glDeleteRenderbuffers(1, &m_fbo_renderbuffer);
+    glDeleteFramebuffers(1, &m_fbo);
 }
 
 void Realtime::resizeGL(int w, int h) {
@@ -328,42 +373,42 @@ void Realtime::resizeGL(int w, int h) {
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
 
     // Students: anything requiring OpenGL calls when the program starts should be done here
-    SceneCameraData cameraData = settings.renderData.cameraData;
-    settings.renderData.cameraData.projectionMatrix =
-            SceneParser::getProjectionMatrix(settings.nearPlane, settings.farPlane, cameraData.heightAngle, float(width()) / float(height()));
+    deleteFbo();
+    m_screen_width = size().width() * m_devicePixelRatio;
+    m_screen_height = size().height() * m_devicePixelRatio;
+    m_fbo_width = m_screen_width;
+    m_fbo_height = m_screen_height;
+    makeFbo();
+
+    cam.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
+    Realtime::updateCamUniforms();
 }
 
-void Realtime::settingsChanged() {
-    SceneCameraData cameraData = settings.renderData.cameraData;
-    settings.renderData.cameraData.projectionMatrix =
-            SceneParser::getProjectionMatrix(settings.nearPlane, settings.farPlane, cameraData.heightAngle, float(width()) / float(height()));
+void Realtime::sceneChanged() {
+    SceneParser::parse(settings.sceneFilePath, metaData);
+    cam.setCamData(metaData.cameraData);
+    cam.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
+    initSceneUniforms();
 
-    updateShapeParameters();
     update(); // asks for a PaintGL() call to occur
 }
 
-// Makes the framebuffer
-void Realtime::makeFBO(){
-    glGenTextures(1, &m_fbo_texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_fbo_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
+void Realtime::settingsChanged() {
+    // camera change
+    cam.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
 
-    glGenRenderbuffers(1, &m_fbo_renderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, m_fbo_renderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_fbo_width, m_fbo_height);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    // shape parameter change
+    updateShapeParameter();
 
-    glGenFramebuffers(1, &m_fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    // update if scene is loaded
+    if (m_vbos.size() > 0) {
+        for (int i = 0; i < verts.size(); i++) {
+            updateVbo(i);
+        }
+        Realtime::updateCamUniforms();
+    }
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_fbo_texture, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_fbo_renderbuffer);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    update(); // asks for a PaintGL() call to occur
 }
 
 // ================== Project 6: Action!
@@ -389,22 +434,6 @@ void Realtime::mouseReleaseEvent(QMouseEvent *event) {
     }
 }
 
-glm::mat3 getRotationMatrix(float angle, glm::vec3 axis) {
-    float x = axis[0];
-    float y = axis[1];
-    float z = axis[2];
-    return glm::mat3(glm::vec3(cos(angle) + powf(x, 2) * (1 - cos(angle)),
-                                x * y * (1 - cos(angle)) + z * sin(angle),
-                                x * z * (1 - cos(angle)) - y * sin(angle)),
-                      glm::vec3(x * y * (1 - cos(angle)) - z * sin(angle),
-                                cos(angle) + powf(y, 2) * (1 - cos(angle)),
-                                y * z * (1 - cos(angle)) + x * sin(angle)),
-                      glm::vec3(x * z * (1 - cos(angle)) + y * sin(angle),
-                                y * z * (1 - cos(angle)) - x * sin(angle),
-                                cos(angle) + powf(z, 2) * (1 - cos(angle))));
-
-}
-
 void Realtime::mouseMoveEvent(QMouseEvent *event) {
     if (m_mouseDown) {
         int posX = event->position().x();
@@ -414,17 +443,14 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         m_prev_mouse_pos = glm::vec2(posX, posY);
 
         // Use deltaX and deltaY here to rotate
-        SceneCameraData &cameraData = settings.renderData.cameraData;
+        float angleX = (float) deltaX / width();
+        cam.setCamRotate(glm::vec3(0, 1, 0), angleX);
 
-        glm::mat3 xRotation = getRotationMatrix(-deltaX / 100.f, glm::vec3(0, 1, 0));
-        glm::mat3 yRotation = getRotationMatrix(-deltaY / 100.f, glm::normalize(glm::cross(glm::vec3(cameraData.look), glm::vec3(cameraData.up))));
+        float angleY = (float) deltaY / height();
+        glm::vec3 axis = glm::normalize(glm::cross(glm::vec3(cam.look), glm::vec3(cam.up)));
+        cam.setCamRotate(axis, angleY);
 
-        cameraData.pos = glm::vec4(xRotation * yRotation * cameraData.pos, 0);
-        cameraData.look = glm::vec4(xRotation * yRotation * cameraData.look, 0);
-        cameraData.up = glm::vec4(xRotation * yRotation * cameraData.up, 0);
-
-        cameraData.viewMatrix = SceneParser::getViewMatrix(cameraData.pos, cameraData.look, cameraData.up);
-        cameraData.inverseViewMatrix = glm::inverse(cameraData.viewMatrix);
+        updateCamUniforms();
 
         update(); // asks for a PaintGL() call to occur
     }
@@ -435,41 +461,32 @@ void Realtime::timerEvent(QTimerEvent *event) {
     float deltaTime = elapsedms * 0.001f;
     m_elapsedTimer.restart();
 
-    // Use deltaTime and m_keyMap here to move around
-    glm::vec4 shiftDirection = glm::vec4(0);
+    glm::vec3 translation = glm::vec3(0.f);
+    glm::vec3 xDir = glm::cross(glm::vec3(cam.look), glm::vec3(cam.up));
 
+    // Use deltaTime and m_keyMap here to move around
     if (m_keyMap[Qt::Key_W]) {
-        shiftDirection += glm::vec4(0, 0, -1, 0);
+        translation += cam.look;
     }
     if (m_keyMap[Qt::Key_S]) {
-        shiftDirection += glm::vec4(0, 0, 1, 0);
+        translation -= cam.look;
     }
     if (m_keyMap[Qt::Key_A]) {
-        shiftDirection += glm::vec4(-1, 0, 0, 0);
+        translation -= xDir;
     }
     if (m_keyMap[Qt::Key_D]) {
-        shiftDirection += glm::vec4(1, 0, 0, 0);
+        translation += xDir;
     }
     if (m_keyMap[Qt::Key_Space]) {
-        shiftDirection += glm::vec4(0, 1, 0, 0);
+        translation[1] += 1.f;
     }
     if (m_keyMap[Qt::Key_Control]) {
-        shiftDirection += glm::vec4(0, -1, 0, 0);
+        translation[1] -= 1.f;
     }
-
-    if (glm::length(shiftDirection) > 0) {
-        SceneCameraData &cameraData = settings.renderData.cameraData;
-
-        shiftDirection = cameraData.inverseViewMatrix * shiftDirection;
-        shiftDirection = glm::normalize(shiftDirection);
-        glm::vec4 shiftVector = 50 * deltaTime * shiftDirection;
-        cameraData.pos += shiftVector;
-        cameraData.viewMatrix = SceneParser::getViewMatrix(cameraData.pos,
-                                                           cameraData.look,
-                                                           cameraData.up);
-        cameraData.inverseViewMatrix = glm::inverse(cameraData.viewMatrix);
+    if (translation != glm::vec3(0.f)) {
+        translation *= 5.f * deltaTime;
+        cam.setCamPos(translation);
+        updateCamUniforms();
     }
-
-
     update(); // asks for a PaintGL() call to occur
 }

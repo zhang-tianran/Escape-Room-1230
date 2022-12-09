@@ -1,10 +1,9 @@
 #include "Sphere.h"
-#include "glm/ext/scalar_constants.hpp"
 
 void Sphere::updateParams(int param1, int param2) {
     m_vertexData = std::vector<float>();
-    m_param1 = std::max(param1, 2);
-    m_param2 = std::max(param2, 3);
+    m_param1 = param1;
+    m_param2 = param2;
     setVertexData();
 }
 
@@ -12,49 +11,67 @@ void Sphere::makeTile(glm::vec3 topLeft,
                       glm::vec3 topRight,
                       glm::vec3 bottomLeft,
                       glm::vec3 bottomRight) {
+    glm::vec3 normTopLeft = glm::normalize(topLeft);
+    glm::vec3 normTopRight = glm::normalize(topRight);
+    glm::vec3 normBottomLeft = glm::normalize(bottomLeft);
+    glm::vec3 normBottomRight = glm::normalize(bottomRight);
     insertVec3(m_vertexData, topLeft);
-    insertVec3(m_vertexData, glm::normalize(topLeft));
-    insertVec3(m_vertexData, topRight);
-    insertVec3(m_vertexData, glm::normalize(topRight));
-    insertVec3(m_vertexData, bottomRight);
-    insertVec3(m_vertexData, glm::normalize(bottomRight));
-    insertVec3(m_vertexData, topLeft);
-    insertVec3(m_vertexData, glm::normalize(topLeft));
-    insertVec3(m_vertexData, bottomRight);
-    insertVec3(m_vertexData, glm::normalize(bottomRight));
+    insertVec3(m_vertexData, normTopLeft);
+    m_vertexData.push_back(1.f);
+    m_vertexData.push_back(1.f);
     insertVec3(m_vertexData, bottomLeft);
-    insertVec3(m_vertexData, glm::normalize(bottomLeft));
+    insertVec3(m_vertexData, normBottomLeft);
+    m_vertexData.push_back(1.f);
+    m_vertexData.push_back(1.f);
+    insertVec3(m_vertexData, bottomRight);
+    insertVec3(m_vertexData, normBottomRight);
+    m_vertexData.push_back(1.f);
+    m_vertexData.push_back(1.f);
+    insertVec3(m_vertexData, bottomRight);
+    insertVec3(m_vertexData, normBottomRight);
+    m_vertexData.push_back(1.f);
+    m_vertexData.push_back(1.f);
+    insertVec3(m_vertexData, topRight);
+    insertVec3(m_vertexData, normTopRight);
+    m_vertexData.push_back(1.f);
+    m_vertexData.push_back(1.f);
+    insertVec3(m_vertexData, topLeft);
+    insertVec3(m_vertexData, normTopLeft);
+    m_vertexData.push_back(1.f);
+    m_vertexData.push_back(1.f);
 }
 
 void Sphere::makeWedge(float currentTheta, float nextTheta) {
-    auto const pi = glm::pi<float>();
-
-    auto phiStep = pi / m_param1;
-
-    for (int i = 1; i < m_param1; i++) {
-        auto topLeft = glm::vec3(m_radius * sin(i * phiStep) * sin(currentTheta),
-                                 m_radius * cos(i * phiStep),
-                                 m_radius * sin(i * phiStep) * cos(currentTheta));
-
-        auto topRight = glm::vec3(m_radius * sin((i+1) * phiStep) * sin(nextTheta),
-                                  m_radius * cos((i+1) * phiStep),
-                                  m_radius * sin((i+1) * phiStep) * cos(nextTheta));
-
-        auto bottomLeft = glm::vec3(m_radius * sin((i-1) * phiStep) * sin(currentTheta),
-                                    m_radius * cos((i-1) * phiStep),
-                                    m_radius * sin((i-1) * phiStep) * cos(currentTheta));
-
-        auto bottomRight = glm::vec3(m_radius * sin(i * phiStep) * sin(nextTheta),
-                                     m_radius * cos(i * phiStep),
-                                     m_radius * sin(i * phiStep) * cos(nextTheta));
+    float phi = glm::radians(180.f) / (float) m_param1;
+    for (int i = 0; i < m_param1; i++) {
+        glm::vec3 topLeft = glm::vec3 {
+                0.5 * sin(i * phi) * sin(currentTheta),
+                0.5 * cos(i * phi),
+                0.5 * sin(i * phi) * cos(currentTheta)
+        };
+        glm::vec3 topRight = glm::vec3 {
+                0.5 * sin(i * phi) * sin(nextTheta),
+                0.5 * cos(i * phi),
+                0.5 * sin(i * phi) * cos(nextTheta)
+        };
+        glm::vec3 bottomLeft = glm::vec3 {
+                0.5 * sin((i+1) * phi) * sin(currentTheta),
+                0.5 * cos((i+1) * phi),
+                0.5 * sin((i+1) * phi) * cos(currentTheta)
+        };
+        glm::vec3 bottomRight = glm::vec3 {
+                0.5 * sin((i+1) * phi) * sin(nextTheta),
+                0.5 * cos((i+1) * phi),
+                0.5 * sin((i+1) * phi) * cos(nextTheta)
+        };
         makeTile(topLeft, topRight, bottomLeft, bottomRight);
     }
 }
 
 void Sphere::makeSphere() {
-    float thetaStep = glm::radians(360.f / m_param2);
+    float theta = glm::radians(360.f / m_param2);
     for (int i = 0; i < m_param2; i++) {
-        makeWedge(thetaStep * (float) i, thetaStep * (float) (i + 1));
+        makeWedge(theta * i, theta * (i + 1));
     }
 }
 
