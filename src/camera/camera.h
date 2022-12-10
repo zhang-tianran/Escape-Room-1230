@@ -13,24 +13,24 @@ public:
     void setCamPos(glm::vec3 translation);
     void setCamRotate(glm::vec3 axis, float angle);
 
-    glm::mat4 getViewMatrix() { return view; };
-    glm::mat4 getViewInverse() { return viewInverse; };
-    glm::mat4 getProjection() { return projection; };
+    glm::mat4 getViewMatrix() { return m_view; };
+    glm::mat4 getViewInverse() { return m_viewInverse; };
+    glm::mat4 getProjection() { return m_projection; };
 
-    glm::vec3 look;
-    glm::vec3 up;
-    glm::vec3 pos;
+    glm::vec3 m_look;
+    glm::vec3 m_up;
+    glm::vec3 m_pos;
 
 private:
 
     float m_far;
     float m_near;
     float m_aspectRatio;
-    float heightAngle;
+    float m_heightAngle;
 
-    glm::mat4 view;
-    glm::mat4 viewInverse;
-    glm::mat4 projection;
+    glm::mat4 m_view;
+    glm::mat4 m_viewInverse;
+    glm::mat4 m_projection;
 
     void calcView();
     void calcProj();

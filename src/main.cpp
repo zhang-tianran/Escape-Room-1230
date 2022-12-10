@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 
+#include "settings.h"
 #include <QApplication>
 #include <QScreen>
 #include <iostream>
@@ -16,6 +17,8 @@ int main(int argc, char *argv[]) {
     fmt.setVersion(4, 1);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(fmt);
+
+    settings.sceneFilePath = QCoreApplication::arguments().at(1).toStdString();
 
     MainWindow w;
     w.initialize();
