@@ -110,14 +110,11 @@ void main() {
             temp_d *= falloff;
             temp_s *= falloff;
         }
-        diffusion += temp_d;
-        specular += temp_s;
+        float shadow = shadowValue(vec3(worldPos));
+
+        diffusion += (1 - shadow) * temp_d;
+        specular += (1 - shadow) * temp_s;
     }
-    float shadow = shadowValue(vec3(worldPos));
 
-    vec3 lightVec = vec3(worldPos) - vec3(lightArr[0].pos);
-    float closestDepth = texture(depthMap, lightVec).r * far_plane;
-    float currentDepth = length(lightVec);
-
-    fragColor = vec4(vec3(ambient + (1.0) * (diffusion + specular)), 1.0);
+    fragColor = vec4(vec3(ambient + diffusion + specular), 1.0);
 }

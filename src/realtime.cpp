@@ -202,7 +202,6 @@ void Realtime::setShadowUniforms(SceneLightData& light) {
 
     glUniform3fv(glGetUniformLocation(m_depth_shader, "lightPos"), 1, &lightPos[0]);
     glUniform1f(glGetUniformLocation(m_depth_shader, "far_plane"), 25.0f);
-    glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "lightDown"), 1, GL_FALSE, &lightDown[0][0]);
     for (int i = 0; i < 6; i++) {
         glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, ("shadowMatrices[" + std::to_string(i) + "]").c_str()),
                            1, GL_FALSE, &shadowTransforms[i][0][0]);
@@ -359,8 +358,8 @@ void Realtime::initializeGL() {
 
     m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/texture.vert", ":/resources/shaders/texture.frag");
-    m_depth_shader = ShaderLoader::createShaderProgram(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag");
-//    m_depth_shader = ShaderLoader::createShaderProgramWithGeometry(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag", ":/resources/shaders/depth.geom");
+//    m_depth_shader = ShaderLoader::createShaderProgram(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag");
+    m_depth_shader = ShaderLoader::createShaderProgramWithGeometry(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag", ":/resources/shaders/depth.geom");
 
     // Vao/Vbo
     for (int i = 0; i < m_shapeVertices.size(); i++) {
@@ -427,29 +426,30 @@ void Realtime::paintShadows() {
 }
 
 void Realtime::paintGL() {
-//    glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
+    glViewport(0, 0, settings.mapSize, settings.mapSize);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // paint shadows
     glUseProgram(m_depth_shader);
     paintShadows();
 
-//    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-//    glViewport(0, 0, m_fbo_width, m_fbo_height);
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    glViewport(0, 0, m_fbo_width, m_fbo_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//    // paint geometry
-//    glUseProgram(m_shader);
-//    paintGeometry();
+    // paint geometry
+    glUseProgram(m_shader);
+    paintGeometry();
 
-//    glUseProgram(m_texture_shader);
-//    initFboFilter();
-//    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
-//    glViewport(0, 0, m_screen_width, m_screen_height);
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(m_texture_shader);
+    initFboFilter();
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    glViewport(0, 0, m_screen_width, m_screen_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//    // paint texture
-//    paintTexture(m_fbo_texture);
+    // paint texture
+    paintTexture(m_fbo_texture);
     glUseProgram(0);
 }
 
