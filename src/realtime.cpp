@@ -62,6 +62,33 @@ void Realtime::initShapeVertexObjects(){
     glBindVertexArray(0);
 }
 
+void Realtime::drawPrimitive(RenderShapeData& obj) {
+    switch(obj.primitive.type) {
+        case PrimitiveType::PRIMITIVE_CUBE:
+            glBindVertexArray(m_vaos[0]);
+            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[0].size() / 6);
+            glBindBuffer(0, m_vaos[0]);
+            break;
+        case PrimitiveType::PRIMITIVE_SPHERE:
+            glBindVertexArray(m_vaos[1]);
+            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[1].size() / 6);
+            glBindBuffer(0, m_vaos[1]);
+            break;
+        case PrimitiveType::PRIMITIVE_CONE:
+            glBindVertexArray(m_vaos[2]);
+            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[2].size() / 6);
+            glBindBuffer(0, m_vaos[2]);
+            break;
+        case PrimitiveType::PRIMITIVE_CYLINDER:
+            glBindVertexArray(m_vaos[3]);
+            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[3].size() / 6);
+            glBindBuffer(0, m_vaos[3]);
+            break;
+        default:
+            break;
+    }
+}
+
 // camera
 void Realtime::updateCameraUniforms(){
     glUseProgram(m_shader);
@@ -126,84 +153,57 @@ void Realtime::initSceneUniforms(){
 }
 
 void Realtime::makeShadowFbos() {
-    glGenFramebuffers(m_numLights * 6, &m_shadow_fbos[0]);
-    glGenTextures(m_numLights * 6, &m_depthTextures[0]);
-    for (int i = 0; i < m_numLights * 6; i++) {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbos[i]);
-        glBindTexture(GL_TEXTURE_2D, m_depthTextures[i]);
+    glGenFramebuffers(1, &m_shadow_fbo);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, settings.mapSize, settings.mapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glGenTextures(1, &m_depthTexture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_depthTexture);
 
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_depthTextures[i], 0);
-        glDrawBuffer(GL_NONE);
+    for (int i = 0; i < 6; i++) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
+                     settings.mapSize, settings.mapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     }
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_depthTexture, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Realtime::drawDepthMaps() {
-    auto looks = std::vector<glm::vec3>{glm::vec3(1, 0, 0),
-                                        glm::vec3(-1, 0, 0),
-                                        glm::vec3(0, 1, 0),
-                                        glm::vec3(0, -1, 0),
-                                        glm::vec3(0, 0, 1),
-                                        glm::vec3(0, 0, -1)};
-    auto ups = std::vector<glm::vec3>{glm::vec3(0, 1, 0),
-                                      glm::vec3(0, 1, 0),
-                                      glm::vec3(0, 0, -1),
-                                      glm::vec3(0, 0, 1),
-                                      glm::vec3(0, 1, 0),
-                                      glm::vec3(0, 1, 0)};
+void Realtime::setShadowUniforms(SceneLightData& light) {
+    glm::mat4 shadowProj = glm::perspective(glm::radians(90.f), 1.0f, 1.0f, 25.0f);
+    glm::vec3 lightPos = glm::vec3(light.pos);
 
-    for (int i = 0; i < m_metaData.lights.size(); i++) {
-        SceneLightData light = m_metaData.lights[i];
-        for (int j = 0; j < 6; j++) {
-            glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbos[i * 6 + j]);
-            glViewport(0, 0, settings.mapSize, settings.mapSize);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    m_shadowTransforms.push_back(shadowProj *
+                     glm::lookAt(lightPos, lightPos + glm::vec3( 1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
+    m_shadowTransforms.push_back(shadowProj *
+                     glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
+    m_shadowTransforms.push_back(shadowProj *
+                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+    m_shadowTransforms.push_back(shadowProj *
+                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0), glm::vec3(0.0, 0.0,-1.0)));
+    m_shadowTransforms.push_back(shadowProj *
+                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0, 1.0), glm::vec3(0.0,-1.0, 0.0)));
+    m_shadowTransforms.push_back(shadowProj *
+                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0), glm::vec3(0.0,-1.0, 0.0)));
 
-            glm::mat4 lightProj = glm::ortho<float>(-10, 10, -10, 10, -10, 20);
-            glm::mat4 lightView = glm::lookAt(glm::vec3(light.pos),
-                                              glm::vec3(light.pos) + looks[j],
-                                              ups[j]);
-
-            glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "lightView"), 1, GL_FALSE, &lightView[0][0]);
-            glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "lightProj"), 1, GL_FALSE, &lightProj[0][0]);
-            for (RenderShapeData &obj: m_metaData.shapes) {
-                glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "model"), 1, GL_FALSE, &obj.ctm[0][0]);
-
-                switch(obj.primitive.type) {
-                    case PrimitiveType::PRIMITIVE_CUBE:
-                        glBindVertexArray(m_vaos[0]);
-                        glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[0].size() / 6);
-                        glBindBuffer(0, m_vaos[0]);
-                        break;
-                    case PrimitiveType::PRIMITIVE_SPHERE:
-                        glBindVertexArray(m_vaos[1]);
-                        glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[1].size() / 6);
-                        glBindBuffer(0, m_vaos[1]);
-                        break;
-                    case PrimitiveType::PRIMITIVE_CONE:
-                        glBindVertexArray(m_vaos[2]);
-                        glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[2].size() / 6);
-                        glBindBuffer(0, m_vaos[2]);
-                        break;
-                    case PrimitiveType::PRIMITIVE_CYLINDER:
-                        glBindVertexArray(m_vaos[3]);
-                        glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[3].size() / 6);
-                        glBindBuffer(0, m_vaos[3]);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
+    glUseProgram(m_depth_shader);
+    glUniform3fv(glGetUniformLocation(m_depth_shader, "lightPos"), 1, &lightPos[0]);
+    glUniform1f(glGetUniformLocation(m_depth_shader, "far_plane"), 25.0f);
+    for (int i = 0; i < 6; i++) {
+        glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, ("shadowMatrices[" + std::to_string(i) + "]").c_str()),
+                           1, GL_FALSE, &m_shadowTransforms[i][0][0]);
     }
+
+    glUseProgram(0);
 }
 
 void Realtime::makeFbo(){
@@ -215,6 +215,7 @@ void Realtime::makeFbo(){
 
     // Generate and bind an empty texture, set its min/mag filter interpolation, then unbind
     glGenTextures(1, &m_fbo_texture);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_fbo_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -241,7 +242,7 @@ void Realtime::makeFbo(){
 
 void Realtime::initFbo(){
     // height and width data
-    m_defaultFBO = 2;
+    m_defaultFBO = 3;
     m_screen_width = size().width() * m_devicePixelRatio;
     m_screen_height = size().height() * m_devicePixelRatio;
     m_fbo_width = m_screen_width;
@@ -322,14 +323,8 @@ void Realtime::finish() {
     delete m_cube;
     delete m_cylinder;
 
-    for (int i = 0; i < m_numLights * 6; i++) {
-        GLuint shadow_fbo = m_shadow_fbos[i];
-        glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
-        grabFramebuffer().save(("shadows/image/" + std::to_string(i)).c_str());
-    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(m_numLights * 6, m_shadow_fbos);
-    glDeleteTextures(m_numLights * 6, m_depthTextures);
+    glDeleteFramebuffers(1, &m_shadow_fbo);
 
     this->doneCurrent();
 }
@@ -361,7 +356,7 @@ void Realtime::initializeGL() {
 
     m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/texture.vert", ":/resources/shaders/texture.frag");
-    m_depth_shader = ShaderLoader::createShaderProgram(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag");
+    m_depth_shader = ShaderLoader::createShaderProgramWithGeometry(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag", ":/resources/shaders/depth.geom");
 
     // Vao/Vbo
     for (int i = 0; i < m_shapeVertices.size(); i++) {
@@ -379,6 +374,7 @@ void Realtime::initializeGL() {
     glUniform1i(glGetUniformLocation(m_texture_shader, "sampler"), 0);
     glUseProgram(0);
     initFbo();
+    makeShadowFbos();
 }
 
 void Realtime::paintGeometry(){
@@ -388,6 +384,10 @@ void Realtime::paintGeometry(){
         glm::mat3 inv = inverse(transpose(glm::mat3(obj.ctm)));
         glUniformMatrix3fv(glGetUniformLocation(m_shader, "m_norm"), 1, GL_FALSE, &inv[0][0]);
 
+        // Shadow data
+        glUniform1i(glGetUniformLocation(m_shader, "depthMap"), 1);
+        glUniform1f(glGetUniformLocation(m_shader, "far_plane"), 25.0f);
+
         // Material
         SceneMaterial material = obj.primitive.material;
         glUniform4f(glGetUniformLocation(m_shader, "material.cAmbient"), material.cAmbient.r, material.cAmbient.g, material.cAmbient.b, material.cAmbient.a);
@@ -395,35 +395,14 @@ void Realtime::paintGeometry(){
         glUniform4f(glGetUniformLocation(m_shader, "material.cSpecular"), material.cSpecular.r, material.cSpecular.g, material.cSpecular.b, material.cSpecular.a);
         glUniform1f(glGetUniformLocation(m_shader, "material.shininess"), material.shininess);
 
-        switch(obj.primitive.type) {
-            case PrimitiveType::PRIMITIVE_CUBE:
-                glBindVertexArray(m_vaos[0]);
-                glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[0].size() / 6);
-                glBindBuffer(0, m_vaos[0]);
-                break;
-            case PrimitiveType::PRIMITIVE_SPHERE:
-                glBindVertexArray(m_vaos[1]);
-                glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[1].size() / 6);
-                glBindBuffer(0, m_vaos[1]);
-                break;
-            case PrimitiveType::PRIMITIVE_CONE:
-                glBindVertexArray(m_vaos[2]);
-                glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[2].size() / 6);
-                glBindBuffer(0, m_vaos[2]);
-                break;
-            case PrimitiveType::PRIMITIVE_CYLINDER:
-                glBindVertexArray(m_vaos[3]);
-                glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[3].size() / 6);
-                glBindBuffer(0, m_vaos[3]);
-                break;
-            default:
-                break;
-        }
+        drawPrimitive(obj);
     }
 }
 
 void Realtime::paintTexture(GLuint texture){
     glBindVertexArray(m_fullscreen_vao);
+
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -431,27 +410,44 @@ void Realtime::paintTexture(GLuint texture){
     glBindVertexArray(0);
 }
 
-void Realtime::paintGL() {
+void Realtime::paintShadows() {
     glUseProgram(m_depth_shader);
-    drawDepthMaps();
 
-//    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-//    glViewport(0, 0, m_fbo_width, m_fbo_height);
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    setShadowUniforms(m_metaData.lights[0]);
+    for (RenderShapeData &obj: m_metaData.shapes) {
+        glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "model"), 1, GL_FALSE, &obj.ctm[0][0]);
 
-//    // paint geometry
-//    glUseProgram(m_shader);
-//    paintGeometry();
+        drawPrimitive(obj);
+    }
+    glUseProgram(0);
+}
 
-//    // paint texture
-//    glUseProgram(m_texture_shader);
-//    initFboFilter();
-//    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
-//    glViewport(0, 0, m_screen_width, m_screen_height);
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    paintTexture(m_fbo_texture);
+void Realtime::paintGL() {
+    glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
+    glViewport(0, 0, settings.mapSize, settings.mapSize);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//    glUseProgram(0);
+    // paint shadows
+    glUseProgram(m_depth_shader);
+    paintShadows();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    glViewport(0, 0, m_fbo_width, m_fbo_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // paint geometry
+    glUseProgram(m_shader);
+    paintGeometry();
+
+    glUseProgram(m_texture_shader);
+    initFboFilter();
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    glViewport(0, 0, m_screen_width, m_screen_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // paint texture
+    paintTexture(m_fbo_texture);
+    glUseProgram(0);
 }
 
 void Realtime::deleteFbo(){

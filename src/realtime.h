@@ -85,15 +85,20 @@ private:
     GLuint m_fbo_renderbuffer;
 
     // shadow objects
-    static const int m_numLights = 3;
+    static const int m_numLights = 1;
     void makeShadowFbos();
     void drawDepthMaps();
+    void setShadowUniforms(SceneLightData& light);
     GLuint m_depth_shader;
-    GLuint m_shadow_fbos[m_numLights];
-    GLuint m_depthTextures[m_numLights];
+//    GLuint m_shadow_fbos[m_numLights * 6];
+    GLuint m_shadow_fbo;
+    GLuint m_depthTexture;
+//    GLuint m_depthTextures[m_numLights * 6];
+    std::vector<glm::mat4> m_shadowTransforms;
 
     // paint
     void paintGeometry();
+    void paintShadows();
     void paintTexture(GLuint texture);
 
     // Scene info
@@ -105,6 +110,7 @@ private:
     // Shapes
     void updateShapeParameter();
     void initShapes();
+    void drawPrimitive(RenderShapeData& obj);
     Cube* m_cube;
     Sphere* m_sphere;
     Cylinder* m_cylinder;

@@ -39,6 +39,21 @@ out vec4 fragColor;
 
 in vec2 uvCoordinate;
 
+// For shadows
+uniform samplerCube depthMap;
+uniform float far_plane;
+
+float shadowValue(vec3 pos) {
+    vec3 lightVec = pos - vec3(lightArr[0].pos);
+    float closestDepth = texture(depthMap, lightVec).r * far_plane;
+    float currentDepth = length(lightVec);
+    if (currentDepth - 0.05 > closestDepth) {
+        return 1.0;
+    } else {
+        return 0.0;
+    }
+}
+
 void main() {
 
     vec4 worldNormNormalized = normalize(worldNorm);
@@ -98,7 +113,12 @@ void main() {
         diffusion += temp_d;
         specular += temp_s;
     }
+    float shadow = shadowValue(vec3(worldPos));
 
+    vec3 lightVec = vec3(worldPos) - vec3(lightArr[0].pos);
+    float closestDepth = texture(depthMap, lightVec).r * far_plane;
+    float currentDepth = length(lightVec);
+    fragColor = vec4(vec3(currentDepth / far_plane), 1);
 
-    fragColor = vec4(vec3(ambient + diffusion + specular), 1.0);
+//    fragColor = vec4(vec3(ambient + (1.0) * (diffusion + specular)), 1.0);
 }
