@@ -9,6 +9,7 @@ struct Settings {
     int shapeParameter2 = 25;
     float nearPlane = 0.01;
     float farPlane = 100;
+    int mapSize = 256;
 };
 
 

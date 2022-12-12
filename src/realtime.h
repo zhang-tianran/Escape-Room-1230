@@ -84,6 +84,14 @@ private:
     GLuint m_fbo_texture;
     GLuint m_fbo_renderbuffer;
 
+    // shadow objects
+    static const int m_numLights = 3;
+    void makeShadowFbos();
+    void drawDepthMaps();
+    GLuint m_depth_shader;
+    GLuint m_shadow_fbos[m_numLights];
+    GLuint m_depthTextures[m_numLights];
+
     // paint
     void paintGeometry();
     void paintTexture(GLuint texture);
@@ -92,7 +100,7 @@ private:
     Camera m_camera;
     RenderData m_metaData;
     void initSceneUniforms();
-    void updateCamUniforms();
+    void updateCameraUniforms();
 
     // Shapes
     void updateShapeParameter();
