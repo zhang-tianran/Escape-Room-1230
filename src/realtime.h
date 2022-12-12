@@ -94,7 +94,6 @@ private:
     GLuint m_shadow_fbo;
     GLuint m_depthTexture;
 //    GLuint m_depthTextures[m_numLights * 6];
-    std::vector<glm::mat4> m_shadowTransforms;
 
     // paint
     void paintGeometry();

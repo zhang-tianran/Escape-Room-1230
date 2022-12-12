@@ -179,31 +179,34 @@ void Realtime::makeShadowFbos() {
 }
 
 void Realtime::setShadowUniforms(SceneLightData& light) {
-    glm::mat4 shadowProj = glm::perspective(glm::radians(90.f), 1.0f, 1.0f, 25.0f);
+    glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, 1.0f, 25.0f);
     glm::vec3 lightPos = glm::vec3(light.pos);
 
-    m_shadowTransforms.push_back(shadowProj *
-                     glm::lookAt(lightPos, lightPos + glm::vec3( 1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
-    m_shadowTransforms.push_back(shadowProj *
-                     glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
-    m_shadowTransforms.push_back(shadowProj *
-                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
-    m_shadowTransforms.push_back(shadowProj *
-                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0), glm::vec3(0.0, 0.0,-1.0)));
-    m_shadowTransforms.push_back(shadowProj *
-                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0, 1.0), glm::vec3(0.0,-1.0, 0.0)));
-    m_shadowTransforms.push_back(shadowProj *
-                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0), glm::vec3(0.0,-1.0, 0.0)));
+    std::vector<glm::mat4> shadowTransforms;
 
-    glUseProgram(m_depth_shader);
+    shadowTransforms.push_back(shadowProj *
+                   glm::lookAt(lightPos, lightPos + glm::vec3( 1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
+    shadowTransforms.push_back(shadowProj *
+                   glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
+    shadowTransforms.push_back(shadowProj *
+                   glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+    shadowTransforms.push_back(shadowProj *
+                   glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0), glm::vec3(0.0, 0.0,-1.0)));
+    shadowTransforms.push_back(shadowProj *
+                   glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0, 1.0), glm::vec3(0.0,-1.0, 0.0)));
+    shadowTransforms.push_back(shadowProj *
+                   glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0), glm::vec3(0.0,-1.0, 0.0)));
+
+    auto lightDown = shadowProj *
+                   glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0), glm::vec3(0.0, 0.0,-1.0));
+
     glUniform3fv(glGetUniformLocation(m_depth_shader, "lightPos"), 1, &lightPos[0]);
     glUniform1f(glGetUniformLocation(m_depth_shader, "far_plane"), 25.0f);
+    glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "lightDown"), 1, GL_FALSE, &lightDown[0][0]);
     for (int i = 0; i < 6; i++) {
         glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, ("shadowMatrices[" + std::to_string(i) + "]").c_str()),
-                           1, GL_FALSE, &m_shadowTransforms[i][0][0]);
+                           1, GL_FALSE, &shadowTransforms[i][0][0]);
     }
-
-    glUseProgram(0);
 }
 
 void Realtime::makeFbo(){
@@ -356,7 +359,8 @@ void Realtime::initializeGL() {
 
     m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/texture.vert", ":/resources/shaders/texture.frag");
-    m_depth_shader = ShaderLoader::createShaderProgramWithGeometry(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag", ":/resources/shaders/depth.geom");
+    m_depth_shader = ShaderLoader::createShaderProgram(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag");
+//    m_depth_shader = ShaderLoader::createShaderProgramWithGeometry(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag", ":/resources/shaders/depth.geom");
 
     // Vao/Vbo
     for (int i = 0; i < m_shapeVertices.size(); i++) {
@@ -415,38 +419,37 @@ void Realtime::paintShadows() {
 
     setShadowUniforms(m_metaData.lights[0]);
     for (RenderShapeData &obj: m_metaData.shapes) {
-        glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "model"), 1, GL_FALSE, &obj.ctm[0][0]);
+        // Transformation matrices
+        glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "m_model"), 1, GL_FALSE, &obj.ctm[0][0]);
 
         drawPrimitive(obj);
     }
-    glUseProgram(0);
 }
 
 void Realtime::paintGL() {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
-    glViewport(0, 0, settings.mapSize, settings.mapSize);
+//    glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // paint shadows
     glUseProgram(m_depth_shader);
     paintShadows();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-    glViewport(0, 0, m_fbo_width, m_fbo_height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+//    glViewport(0, 0, m_fbo_width, m_fbo_height);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // paint geometry
-    glUseProgram(m_shader);
-    paintGeometry();
+//    // paint geometry
+//    glUseProgram(m_shader);
+//    paintGeometry();
 
-    glUseProgram(m_texture_shader);
-    initFboFilter();
-    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
-    glViewport(0, 0, m_screen_width, m_screen_height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    glUseProgram(m_texture_shader);
+//    initFboFilter();
+//    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+//    glViewport(0, 0, m_screen_width, m_screen_height);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // paint texture
-    paintTexture(m_fbo_texture);
+//    // paint texture
+//    paintTexture(m_fbo_texture);
     glUseProgram(0);
 }
 

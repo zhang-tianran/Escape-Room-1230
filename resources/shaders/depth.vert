@@ -1,9 +1,14 @@
 #version 330 core
-
 layout(location = 0) in vec3 pos;
 
-uniform mat4 model;
+out vec4 worldPos;
 
-void main(){
-  gl_Position = model * vec4(pos, 1);
+uniform mat4 m_model;
+
+uniform mat4 shadowMatrices[6];
+
+void main() {
+    worldPos = m_model * vec4(pos, 1.0);
+
+    gl_Position = shadowMatrices[3] * worldPos;
 }

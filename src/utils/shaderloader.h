@@ -46,14 +46,14 @@ public:
     static GLuint createShaderProgramWithGeometry(const char * vertex_file_path, const char * fragment_file_path, const char * geometry_file_path){
         // Create and compile the shaders.
         GLuint vertexShaderID = createShader(GL_VERTEX_SHADER, vertex_file_path);
-        GLuint fragmentShaderID = createShader(GL_FRAGMENT_SHADER, fragment_file_path);
         GLuint geometryShaderID = createShader(GL_GEOMETRY_SHADER, geometry_file_path);
+        GLuint fragmentShaderID = createShader(GL_FRAGMENT_SHADER, fragment_file_path);
 
         // Link the shader program.
         GLuint programID = glCreateProgram();
         glAttachShader(programID, vertexShaderID);
-        glAttachShader(programID, fragmentShaderID);
         glAttachShader(programID, geometryShaderID);
+        glAttachShader(programID, fragmentShaderID);
         glLinkProgram(programID);
 
         // Print the info log if error
@@ -73,8 +73,8 @@ public:
 
         // Shaders no longer necessary, stored in program
         glDeleteShader(vertexShaderID);
-        glDeleteShader(fragmentShaderID);
         glDeleteShader(geometryShaderID);
+        glDeleteShader(fragmentShaderID);
 
         return programID;
     }
