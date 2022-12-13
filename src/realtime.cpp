@@ -66,22 +66,22 @@ void Realtime::drawPrimitive(RenderShapeData& obj) {
     switch(obj.primitive.type) {
         case PrimitiveType::PRIMITIVE_CUBE:
             glBindVertexArray(m_vaos[0]);
-            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[0].size() / 6);
+            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[0].size() / 8);
             glBindBuffer(0, m_vaos[0]);
             break;
         case PrimitiveType::PRIMITIVE_SPHERE:
             glBindVertexArray(m_vaos[1]);
-            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[1].size() / 6);
+            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[1].size() / 8);
             glBindBuffer(0, m_vaos[1]);
             break;
         case PrimitiveType::PRIMITIVE_CONE:
             glBindVertexArray(m_vaos[2]);
-            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[2].size() / 6);
+            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[2].size() / 8);
             glBindBuffer(0, m_vaos[2]);
             break;
         case PrimitiveType::PRIMITIVE_CYLINDER:
             glBindVertexArray(m_vaos[3]);
-            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[3].size() / 6);
+            glDrawArrays(GL_TRIANGLES, 0, (int) m_shapeVertices[3].size() / 8);
             glBindBuffer(0, m_vaos[3]);
             break;
         default:
