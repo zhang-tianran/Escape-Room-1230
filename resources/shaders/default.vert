@@ -1,11 +1,9 @@
 #version 330 core
 layout(location = 0) in vec3 pos;
 layout(location = 1) in vec3 norm;
-layout(location = 2) in vec2 uvCoord;
 
 out vec4 worldPos;
 out vec4 worldNorm;
-out vec2 uv;
 
 uniform mat4 m_model;
 uniform mat3 m_norm;
@@ -17,7 +15,6 @@ void main() {
     // To world space
     worldPos = m_model * vec4(pos, 1.0);
     worldNorm = vec4(m_norm * normalize(norm), 0.0);
-    uv = uvCoord;
 
     gl_Position = m_proj * m_view * worldPos;
 }

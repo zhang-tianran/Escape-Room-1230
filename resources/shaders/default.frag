@@ -38,8 +38,6 @@ uniform float ks;
 
 out vec4 fragColor;
 
-in vec2 uv;
-
 // For shadows
 uniform samplerCubeArray depthMap;
 uniform float far_plane;
@@ -117,5 +115,6 @@ void main() {
         specular += (1 - shadow) * temp_s;
     }
 
-    fragColor = vec4(vec3(ambient + diffusion + specular), 1.0);
+//    fragColor = vec4(vec3(ambient + diffusion + specular), 1.0);
+    fragColor = vec4(length(worldPos - worldCamPos) / 25);
 }

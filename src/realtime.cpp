@@ -9,6 +9,8 @@
 #include "utils/sceneparser.h"
 #include <glm/gtx/string_cast.hpp>
 
+#include "utils/obj_loader.h"
+
 // ================== Project 5: Lights, Camera
 
 void Realtime::setBlurUniforms(){
@@ -25,6 +27,9 @@ void Realtime::setFxaaUniforms(){
     glUseProgram(0);
 }
 
+void Realtime::loadObjFromFile(std::string filepath) {
+    loadObj(filepath, m_vertices, m_indexes);
+}
 
 void Realtime::updateShapeParameter(){
     m_cube->updateParams(std::max(1, settings.shapeParameter1));
@@ -362,7 +367,6 @@ void Realtime::initializeGL() {
 
     m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_fxaa_shader = ShaderLoader::createShaderProgram(":/resources/shaders/fxaa.vert", ":/resources/shaders/fxaa.frag");
-//    m_depth_shader = ShaderLoader::createShaderProgram(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag");
     m_depth_shader = ShaderLoader::createShaderProgramWithGeometry(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag", ":/resources/shaders/depth.geom");
 
     // Vao/Vbo
@@ -375,6 +379,21 @@ void Realtime::initializeGL() {
     m_camera.setCamData(m_metaData.cameraData);
     m_camera.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
     initSceneUniforms();
+
+    // Obj
+    loadObjFromFile("C:\\Users\\zacha\\Documents\\Brown\\Fall_2022\\CSCI1230\\cs1230-final-project\\escape_room_scene.obj");
+
+    glGenBuffers(1, &m_obj_vbo);
+    glGenVertexArrays(1, &m_obj_vao);
+    glBindVertexArray(m_obj_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, m_obj_vbo);
+    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(float), m_vertices.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(0));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 
     // Fbo
     initFbo();
@@ -402,6 +421,19 @@ void Realtime::paintGeometry(){
         glUniform1f(glGetUniformLocation(m_shader, "material.shininess"), material.shininess);
 
         drawPrimitive(obj);
+    }
+
+    glBindVertexArray(m_obj_vao);
+    glm::mat4 identity = glm::mat4(1);
+    glm::mat3 identity3 = glm::mat3(1);
+    glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_model"), 1, GL_FALSE, &identity[0][0]);
+    glUniformMatrix3fv(glGetUniformLocation(m_shader, "m_norm"), 1, GL_FALSE, &identity3[0][0]);
+
+    for (int i = 1; i < m_indexes.size(); i++) {
+        int prevIndex = m_vertices[i - 1];
+        int countToDraw = m_vertices[i] - m_vertices[i - 1];
+
+        glDrawArrays(GL_TRIANGLES, prevIndex, countToDraw);
     }
 }
 

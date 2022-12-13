@@ -115,4 +115,11 @@ private:
     Cone* m_cone;
 
     void setBlurUniforms();
+
+    // Obj
+    std::vector<float> m_vertices;
+    std::vector<int> m_indexes;
+    void loadObjFromFile(std::string filepath);
+    GLuint m_obj_vbo;
+    GLuint m_obj_vao;
 };
