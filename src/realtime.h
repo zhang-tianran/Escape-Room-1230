@@ -84,19 +84,29 @@ private:
     GLuint m_fbo_texture;
     GLuint m_fbo_renderbuffer;
 
+    // shadow objects
+    void makeShadowFbos();
+    void drawDepthMaps();
+    void setShadowUniforms(SceneLightData& light);
+    GLuint m_depth_shader;
+    GLuint m_shadow_fbo;
+    GLuint m_depthTexture;
+
     // paint
     void paintGeometry();
+    void paintShadows();
     void paintTexture(GLuint texture);
 
     // Scene info
     Camera m_camera;
     RenderData m_metaData;
     void initSceneUniforms();
-    void updateCamUniforms();
+    void updateCameraUniforms();
 
     // Shapes
     void updateShapeParameter();
     void initShapes();
+    void drawPrimitive(RenderShapeData& obj);
     Cube* m_cube;
     Sphere* m_sphere;
     Cylinder* m_cylinder;

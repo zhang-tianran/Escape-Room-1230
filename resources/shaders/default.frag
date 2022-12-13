@@ -1,8 +1,9 @@
-#version 330 core
+#version 400 core
 
 // Light
 struct light
 {
+    int id;
     int type; // point: 0; spot: 1; directional: 2
     vec4 color;
     vec4 pos;
@@ -38,6 +39,21 @@ uniform float ks;
 out vec4 fragColor;
 
 in vec2 uv;
+
+// For shadows
+uniform samplerCubeArray depthMap;
+uniform float far_plane;
+
+float shadowValue(vec3 pos, int lightId) {
+    vec3 lightVec = pos - vec3(lightArr[lightId].pos);
+    float closestDepth = texture(depthMap, vec4(lightVec, float(lightId))).r * far_plane;
+    float currentDepth = length(lightVec);
+    if (currentDepth - 0.05 > closestDepth) {
+        return 1.0;
+    } else {
+        return 0.0;
+    }
+}
 
 void main() {
 
@@ -95,10 +111,11 @@ void main() {
             temp_d *= falloff;
             temp_s *= falloff;
         }
-        diffusion += temp_d;
-        specular += temp_s;
-    }
+        float shadow = shadowValue(vec3(worldPos), lightArr[i].id);
 
+        diffusion += (1 - shadow) * temp_d;
+        specular += (1 - shadow) * temp_s;
+    }
 
     fragColor = vec4(vec3(ambient + diffusion + specular), 1.0);
 }
