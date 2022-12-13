@@ -64,7 +64,6 @@ private:
 
     // Shader
     GLuint m_shader;
-    GLuint m_texture_shader;
 
     // vao/vbo
     void initShapeVertexObjects();
@@ -75,14 +74,17 @@ private:
 
     //fbo
     void initFbo();
-    void makeFbo();
-    void initFboFilter();
+    void makeFbo(GLuint& fbo, GLuint& texture, GLuint& renderbuffer);
     void deleteFbo();
     GLuint m_fullscreen_vbo;
     GLuint m_fullscreen_vao;
-    GLuint m_fbo;
-    GLuint m_fbo_texture;
-    GLuint m_fbo_renderbuffer;
+
+    //fxaa
+    GLuint m_fxaa_shader;
+    GLuint m_fxaa_fbo;
+    GLuint m_fxaa_texture;
+    GLuint m_fxaa_renderbuffer;
+    void setFxaaUniforms();
 
     // shadow objects
     void makeShadowFbos();
@@ -111,4 +113,6 @@ private:
     Sphere* m_sphere;
     Cylinder* m_cylinder;
     Cone* m_cone;
+
+    void setBlurUniforms();
 };
