@@ -39,7 +39,6 @@ uniform float ks;
 out vec4 fragColor;
 
 // For shadows
-bool useShadows;
 uniform samplerCubeArray depthMap;
 uniform float far_plane;
 
@@ -111,15 +110,12 @@ void main() {
             temp_s *= falloff;
         }
 
-        float shadow = 0.f;
-        if (useShadows) {
-            shadow = shadowValue(vec3(worldPos), lightArr[i].id);
-        }
+        float shadow = shadowValue(vec3(worldPos), lightArr[i].id);
 
         diffusion += (1 - shadow) * temp_d;
         specular += (1 - shadow) * temp_s;
+
     }
 
     fragColor = vec4(vec3(ambient + diffusion + specular), 1.0);
-//    fragColor = vec4(length(worldPos - worldCamPos) / 25);
 }

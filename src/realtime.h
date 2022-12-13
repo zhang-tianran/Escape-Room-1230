@@ -92,6 +92,7 @@ private:
     GLuint m_depth_shader;
     GLuint m_shadow_fbo;
     GLuint m_depthTexture;
+    bool m_shadowsDrawn = false;
 
     // paint
     void paintGeometry();

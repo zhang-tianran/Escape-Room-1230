@@ -5,12 +5,15 @@
 
 struct Settings {
     std::string sceneFilePath;
+    std::string objFilePath;
+    std::string drawSceneGeometry;
+    std::string drawObjMeshes;
+    std::string drawShadows = "true";
     int shapeParameter1 = 25;
     int shapeParameter2 = 25;
-    float nearPlane = 0.01;
-    float farPlane = 100;
-    int mapSize = 1024;
-    bool shadows = false;
+    float nearPlane = 1;
+    float farPlane = 20;
+    int mapSize = 2048;
 };
 
 

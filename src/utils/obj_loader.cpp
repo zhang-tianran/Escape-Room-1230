@@ -44,8 +44,6 @@ void loadObj(std::string objFilePath, std::vector<float> &vertices, std::vector<
     for (auto shape = shapes.begin(); shape < shapes.end(); shape++) {
         const std::vector<tinyobj::index_t> &indices = shape->mesh.indices;
 
-        std::cout << "Loading " << shape->mesh.num_face_vertices.size() << " triangles for " << shape->name << std::endl;
-
         for (int i = 0; i < indices.size(); i++) {
             glm::vec3 vertex = verts[indices[i].vertex_index];
             glm::vec3 normal = norms[indices[i].normal_index];
