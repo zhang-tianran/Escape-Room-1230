@@ -1,7 +1,13 @@
 <scenefile>
+	<globaldata>
+		<diffusecoeff v="0.5"/>
+		<specularcoeff v="0.5"/>
+		<ambientcoeff v="0.5"/>
+    </globaldata>
+
 	<cameradata>
-		<pos x="0" y="2" z="0"/>
-		<focus x="0" y="0" z="0"/>
+		<pos x="-5" y="1" z="-30"/>
+		<focus x="12.5" y="1.5" z="-18"/>
 		<up x="0" y="1" z="0"/>
 		<heightangle v="30"/>
 	</cameradata>
@@ -12,7 +18,7 @@
 		<color r="0.953" g="0.82" b="0.455"/>
 		<position x="0" y="3" z="0"/>
         <position x="-12.290081024169922" y="3.797499656677246" z="-26.35352897644043"/>
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
     
     <lightdata>
@@ -20,7 +26,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
 		<position x="-12.657581329345704" y="3.797499656677246" z="-26.725627899169923"/>
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -28,7 +34,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
 		<position x="-13.18458080291748" y="3.797499656677246" z="-26.726627349853517"/>
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -36,7 +42,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
 		<position x="-13.561580657958985" y="3.797499656677246" z="-26.349628448486329"/>
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -44,7 +50,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
 		<position x="-13.561580657958985" y="3.797499656677246" z="-25.82562828063965"/>
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -52,7 +58,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-13.182580947875977" y="3.797499656677246" z="-25.453628540039064"/>
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -60,7 +66,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-12.659581184387207" y="3.797499656677246" z="-25.447628021240236"/>
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -68,7 +74,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-9.262999534606934" y="0.5589996576309204" z="-28.962970733642579"/>
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -76,7 +82,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-16.612001419067384" y="3.4316928386688234" z="-18.729999542236329"/>
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -84,7 +90,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-16.612001419067384" y="3.4316928386688234" z="-14.720000267028809"/>
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -92,7 +98,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-16.612001419067384" y="3.4316928386688234" z="-11.329999923706055" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -100,7 +106,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-13.898380279541016" y="1.5594003200531006" z="-15.834419250488282" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -108,7 +114,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-12.461780548095704" y="1.5683003664016724" z="-15.833819389343262" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -116,7 +122,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-14.79084587097168" y="2.3299999237060549" z="-9.79800033569336" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -124,7 +130,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-10.970000267028809" y="2.3499999046325685" z="-9.79800033569336" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -132,7 +138,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-9.447999954223633" y="3.4316928386688234" z="-11.329999923706055" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -140,7 +146,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-9.447999954223633" y="3.4316928386688234" z="-14.720000267028809" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -148,7 +154,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-9.447999954223633" y="3.4316928386688234" z="-18.729999542236329" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -156,7 +162,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-16.612001419067384" y="3.4316928386688234" z="-11.329999923706055" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -164,7 +170,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-16.612001419067384" y="3.4316928386688234" z="-11.329999923706055" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -172,7 +178,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-14.896180152893067" y="2.078200578689575" z="-9.175000190734864" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -180,7 +186,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-16.78999900817871" y="1.9665536880493165" z="-7.613000392913818" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -188,7 +194,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-16.78999900817871" y="1.9665536880493165" z="-5.873000144958496" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -196,7 +202,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-16.78999900817871" y="1.9665536880493165" z="-3.5329999923706056" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -204,7 +210,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-16.78999900817871" y="1.9665536880493165" z="-0.5850000381469727" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -212,7 +218,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-14.824148178100586" y="2.174999952316284" z="0.5590000152587891" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -220,7 +226,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-14.582000732421875" y="3.0910189151763918" z="5.080999851226807" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -228,7 +234,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-14.582000732421875" y="3.0910189151763918" z="7.476999759674072" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -236,7 +242,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-14.293000221252442" y="3.0910189151763918" z="12.185999870300293" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -244,7 +250,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-11.836000442504883" y="3.0910189151763918" z="12.185999870300293" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -252,7 +258,7 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-11.670000076293946" y="3.0910189151763918" z="7.192999839782715" />
-        <function x="0.8" y="0.2" z="0.0"/>
+        <function x="0.8" y="0.2" z="0.25"/>
 	</lightdata>
 
     <lightdata>
@@ -260,6 +266,16 @@
 		<type v="point"/>
 		<color r="0.953" g="0.82" b="0.455"/>
         <position x="-11.670000076293946" y="3.0910189151763918" z="5.086999893188477" />
-        <function x="0.8" y="0.2" z="0.0"/>
-	</lightdata>
+        <function x="0.8" y="0.2" z="0.25"/>
+    </lightdata>
+
+    <object type="tree" name="root">
+		<transblock>
+			<translate x="0" y="-0.6" z="0"/>
+			<scale x="100" y="0.1" z="100"/>
+			<object type="primitive" name="cube" >
+				<diffuse r="1" g="1" b="1"/>
+			</object>
+        </transblock>
+    </object>
 </scenefile>

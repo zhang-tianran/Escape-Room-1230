@@ -10,6 +10,7 @@ struct Settings {
     float nearPlane = 0.01;
     float farPlane = 100;
     int mapSize = 1024;
+    bool shadows = false;
 };
 
 

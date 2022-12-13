@@ -126,7 +126,7 @@ void Realtime::initSceneUniforms(){
     glUseProgram(m_shader);
 
     // light
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 32; i++) {
         glUniform1i(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].type").c_str()), 3);
         glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].color").c_str()), 0, 0, 0, 0);
         glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].dir").c_str()), 0, 0, 0, 0);
@@ -167,6 +167,9 @@ void Realtime::initSceneUniforms(){
     glUniform1f(glGetUniformLocation(m_shader, "ka"), m_metaData.globalData.ka);
     glUniform1f(glGetUniformLocation(m_shader, "kd"), m_metaData.globalData.kd);
     glUniform1f(glGetUniformLocation(m_shader, "ks"), m_metaData.globalData.ks);
+
+    // shadows
+    glUniform1i(glGetUniformLocation(m_shader, "useShadows"), settings.shadows);
 
     glUseProgram(0);
 
@@ -474,6 +477,7 @@ void Realtime::paintGL() {
 
     // paint geometry
     glUseProgram(m_shader);
+    paintGeometry();
     paintObj();
 
     glUseProgram(m_fxaa_shader);
@@ -588,26 +592,27 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     // Use deltaTime and m_keyMap here to move around
     if (m_keyMap[Qt::Key_W]) {
-        translation += m_camera.m_look;
+        translation += glm::normalize(m_camera.m_look);
     }
     if (m_keyMap[Qt::Key_S]) {
-        translation -= m_camera.m_look;
+        translation -= glm::normalize(m_camera.m_look);
     }
     if (m_keyMap[Qt::Key_A]) {
-        translation -= xDir;
+        translation -= glm::normalize(xDir);
     }
     if (m_keyMap[Qt::Key_D]) {
-        translation += xDir;
+        translation += glm::normalize(xDir);
     }
     if (m_keyMap[Qt::Key_Space]) {
-        translation[1] += 1.f;
+        translation += glm::normalize(m_camera.m_up);
     }
     if (m_keyMap[Qt::Key_Control]) {
-        translation[1] -= 1.f;
+        translation -= glm::normalize(m_camera.m_up);
     }
     if (translation != glm::vec3(0.f)) {
         translation *= 5.f * deltaTime;
         m_camera.setCamPos(translation);
+//        std::cout << "x: " << m_camera.m_pos[0] << "y: " << m_camera.m_pos[1] << "z: " << m_camera.m_pos[2] << std::endl;
         updateCameraUniforms();
     }
     update(); // asks for a PaintGL() call to occur

@@ -13,7 +13,7 @@ struct light
     float angle;
 };
 
-uniform light lightArr[8];
+uniform light lightArr[32];
 
 // Material
 struct Material {
@@ -39,6 +39,7 @@ uniform float ks;
 out vec4 fragColor;
 
 // For shadows
+bool useShadows;
 uniform samplerCubeArray depthMap;
 uniform float far_plane;
 
@@ -62,7 +63,7 @@ void main() {
     vec4 diffusion = vec4(0.f);
     vec4 specular = vec4(0.f);
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 32; i++) {
 
         if (lightArr[i].type > 2) {
             continue;
@@ -109,12 +110,16 @@ void main() {
             temp_d *= falloff;
             temp_s *= falloff;
         }
-        float shadow = shadowValue(vec3(worldPos), lightArr[i].id);
+
+        float shadow = 0.f;
+        if (useShadows) {
+            shadow = shadowValue(vec3(worldPos), lightArr[i].id);
+        }
 
         diffusion += (1 - shadow) * temp_d;
         specular += (1 - shadow) * temp_s;
     }
 
-//    fragColor = vec4(vec3(ambient + diffusion + specular), 1.0);
-    fragColor = vec4(length(worldPos - worldCamPos) / 25);
+    fragColor = vec4(vec3(ambient + diffusion + specular), 1.0);
+//    fragColor = vec4(length(worldPos - worldCamPos) / 25);
 }
