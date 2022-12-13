@@ -422,19 +422,16 @@ void Realtime::paintGeometry(){
 
         drawPrimitive(obj);
     }
+}
 
+void Realtime::paintObj() {
     glBindVertexArray(m_obj_vao);
     glm::mat4 identity = glm::mat4(1);
     glm::mat3 identity3 = glm::mat3(1);
     glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_model"), 1, GL_FALSE, &identity[0][0]);
     glUniformMatrix3fv(glGetUniformLocation(m_shader, "m_norm"), 1, GL_FALSE, &identity3[0][0]);
 
-    for (int i = 1; i < m_indexes.size(); i++) {
-        int prevIndex = m_vertices[i - 1];
-        int countToDraw = m_vertices[i] - m_vertices[i - 1];
-
-        glDrawArrays(GL_TRIANGLES, prevIndex, countToDraw);
-    }
+    glDrawArrays(GL_TRIANGLES, 0, m_vertices.size() / 6);
 }
 
 void Realtime::paintTexture(GLuint texture){
@@ -477,7 +474,7 @@ void Realtime::paintGL() {
 
     // paint geometry
     glUseProgram(m_shader);
-    paintGeometry();
+    paintObj();
 
     glUseProgram(m_fxaa_shader);
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);

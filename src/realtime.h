@@ -13,7 +13,6 @@
 #include <QTime>
 #include <QTimer>
 
-#include "camera/camera.h"
 #include "utils/sceneparser.h"
 #include "shapes/Cube.h"
 #include "shapes/Sphere.h"
@@ -98,6 +97,7 @@ private:
     void paintGeometry();
     void paintShadows();
     void paintTexture(GLuint texture);
+    void paintObj();
 
     // Scene info
     Camera m_camera;
