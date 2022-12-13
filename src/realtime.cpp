@@ -9,6 +9,8 @@
 #include "utils/sceneparser.h"
 #include <glm/gtx/string_cast.hpp>
 
+#include "utils/obj_loader.h"
+
 // ================== Project 5: Lights, Camera
 
 void Realtime::setBlurUniforms(){
@@ -27,6 +29,9 @@ void Realtime::setFxaaUniforms(){
     glUseProgram(0);
 }
 
+void Realtime::loadObjFromFile(std::string filepath) {
+    loadObj(filepath, m_vertices, m_indexes);
+}
 
 void Realtime::updateShapeParameter(){
     m_cube->updateParams(std::max(1, settings.shapeParameter1));
@@ -123,7 +128,7 @@ void Realtime::initSceneUniforms(){
     glUseProgram(m_shader);
 
     // light
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 32; i++) {
         glUniform1i(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].type").c_str()), 3);
         glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].color").c_str()), 0, 0, 0, 0);
         glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].dir").c_str()), 0, 0, 0, 0);
@@ -164,6 +169,16 @@ void Realtime::initSceneUniforms(){
     glUniform1f(glGetUniformLocation(m_shader, "ka"), m_metaData.globalData.ka);
     glUniform1f(glGetUniformLocation(m_shader, "kd"), m_metaData.globalData.kd);
     glUniform1f(glGetUniformLocation(m_shader, "ks"), m_metaData.globalData.ks);
+
+    // shadows
+    if (settings.drawShadows == "true") {
+        glUniform1i(glGetUniformLocation(m_shader, "useShadows"), 1);
+    } else {
+        glUniform1i(glGetUniformLocation(m_shader, "useShadows"), 0);
+    }
+    glUniform1i(glGetUniformLocation(m_shader, "depthMap"), 1);
+    glUniform1f(glGetUniformLocation(m_shader, "far_plane"), 25.0f);
+
 
     glUseProgram(0);
 
@@ -356,6 +371,8 @@ void Realtime::initializeGL() {
     glEnable(GL_DEPTH_TEST);
     // Tells OpenGL to only draw the front face
     glEnable(GL_CULL_FACE);
+    // Tells OpenGL to interpolate across cube map faces
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     // Tells OpenGL how big the screen is
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
 
@@ -364,7 +381,6 @@ void Realtime::initializeGL() {
 
     m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_fxaa_shader = ShaderLoader::createShaderProgram(":/resources/shaders/fxaa.vert", ":/resources/shaders/fxaa.frag");
-//    m_depth_shader = ShaderLoader::createShaderProgram(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag");
     m_depth_shader = ShaderLoader::createShaderProgramWithGeometry(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag", ":/resources/shaders/depth.geom");
 
     // Vao/Vbo
@@ -377,6 +393,21 @@ void Realtime::initializeGL() {
     m_camera.setCamData(m_metaData.cameraData);
     m_camera.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
     initSceneUniforms();
+
+    // Obj
+    loadObjFromFile(settings.objFilePath);
+
+    glGenBuffers(1, &m_obj_vbo);
+    glGenVertexArrays(1, &m_obj_vao);
+    glBindVertexArray(m_obj_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, m_obj_vbo);
+    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(float), m_vertices.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(0));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 
     // Fbo
     initFbo();
@@ -392,9 +423,6 @@ void Realtime::paintGeometry(){
         glm::mat3 inv = inverse(transpose(glm::mat3(obj.ctm)));
         glUniformMatrix3fv(glGetUniformLocation(m_shader, "m_norm"), 1, GL_FALSE, &inv[0][0]);
 
-        // Shadow data
-        glUniform1i(glGetUniformLocation(m_shader, "depthMap"), 1);
-        glUniform1f(glGetUniformLocation(m_shader, "far_plane"), 25.0f);
 
         // Material
         SceneMaterial material = obj.primitive.material;
@@ -405,6 +433,26 @@ void Realtime::paintGeometry(){
 
         drawPrimitive(obj);
     }
+}
+
+void Realtime::paintObj() {
+    glBindVertexArray(m_obj_vao);
+    glm::mat4 translation = glm::mat4(glm::vec4(1, 0, 0, 0),
+                                      glm::vec4(0, 1, 0, 0),
+                                      glm::vec4(0, 0, 1, 0),
+                                      glm::vec4(-26, 0, 0, 1));
+
+    glm::mat4 ctm = translation;
+    glm::mat3 inv = inverse(transpose(glm::mat3(ctm)));
+    glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_model"), 1, GL_FALSE, &ctm[0][0]);
+    glUniformMatrix3fv(glGetUniformLocation(m_shader, "m_norm"), 1, GL_FALSE, &inv[0][0]);
+
+    glUniform4f(glGetUniformLocation(m_shader, "material.cAmbient"), 0, 0, 0, 0);
+    glUniform4f(glGetUniformLocation(m_shader, "material.cDiffuse"), 1, 1, 1, 1);
+    glUniform4f(glGetUniformLocation(m_shader, "material.cSpecular"), 0, 0, 0, 0);
+    glUniform1f(glGetUniformLocation(m_shader, "material.shininess"), 0);
+
+    glDrawArrays(GL_TRIANGLES, 0, m_vertices.size() / 6);
 }
 
 void Realtime::paintTexture(GLuint texture){
@@ -421,25 +469,47 @@ void Realtime::paintTexture(GLuint texture){
 void Realtime::paintShadows() {
     glUseProgram(m_depth_shader);
 
-    for (int i = 0; i < m_metaData.lights.size(); i++) {
-        setShadowUniforms(m_metaData.lights[i]);
-        for (RenderShapeData &obj: m_metaData.shapes) {
-            // Transformation matrices
-            glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "m_model"), 1, GL_FALSE, &obj.ctm[0][0]);
+    if (settings.drawSceneGeometry == "true") {
+        for (int i = 0; i < m_metaData.lights.size(); i++) {
+            setShadowUniforms(m_metaData.lights[i]);
+            for (RenderShapeData &obj: m_metaData.shapes) {
+                // Transformation matrices
+                glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "m_model"), 1, GL_FALSE, &obj.ctm[0][0]);
 
-            drawPrimitive(obj);
+                drawPrimitive(obj);
+            }
+        }
+    }
+
+    if (settings.drawObjMeshes == "true") {
+        for (int i = 0; i < m_metaData.lights.size(); i++) {
+            setShadowUniforms(m_metaData.lights[i]);
+            glm::mat4 translation = glm::mat4(glm::vec4(1, 0, 0, 0),
+                                              glm::vec4(0, 1, 0, 0),
+                                              glm::vec4(0, 0, 1, 0),
+                                              glm::vec4(-26, 0, 0, 1));
+
+            glm::mat4 ctm = translation;
+            glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "m_model"), 1, GL_FALSE, &ctm[0][0]);
+
+            glBindVertexArray(m_obj_vao);
+            glDrawArrays(GL_TRIANGLES, 0, m_vertices.size() / 6);
         }
     }
 }
 
 void Realtime::paintGL() {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
-    glViewport(0, 0, settings.mapSize, settings.mapSize);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (!m_shadowsDrawn) {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
+        glViewport(0, 0, settings.mapSize, settings.mapSize);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // paint shadows
-    glUseProgram(m_depth_shader);
-    paintShadows();
+        // paint shadows
+        glUseProgram(m_depth_shader);
+        paintShadows();
+
+        m_shadowsDrawn = true;
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_fxaa_fbo);
     glViewport(0, 0, m_fbo_width, m_fbo_height);
@@ -447,7 +517,12 @@ void Realtime::paintGL() {
 
     // paint geometry
     glUseProgram(m_shader);
-    paintGeometry();
+    if (settings.drawSceneGeometry == "true") {
+        paintGeometry();
+    }
+    if (settings.drawObjMeshes == "true") {
+        paintObj();
+    }
 
     glUseProgram(m_fxaa_shader);
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
@@ -561,26 +636,27 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     // Use deltaTime and m_keyMap here to move around
     if (m_keyMap[Qt::Key_W]) {
-        translation += m_camera.m_look;
+        translation += glm::normalize(m_camera.m_look);
     }
     if (m_keyMap[Qt::Key_S]) {
-        translation -= m_camera.m_look;
+        translation -= glm::normalize(m_camera.m_look);
     }
     if (m_keyMap[Qt::Key_A]) {
-        translation -= xDir;
+        translation -= glm::normalize(xDir);
     }
     if (m_keyMap[Qt::Key_D]) {
-        translation += xDir;
+        translation += glm::normalize(xDir);
     }
     if (m_keyMap[Qt::Key_Space]) {
-        translation[1] += 1.f;
+        translation += glm::normalize(m_camera.m_up);
     }
     if (m_keyMap[Qt::Key_Control]) {
-        translation[1] -= 1.f;
+        translation -= glm::normalize(m_camera.m_up);
     }
     if (translation != glm::vec3(0.f)) {
         translation *= 5.f * deltaTime;
         m_camera.setCamPos(translation);
+//        std::cout << "x: " << m_camera.m_pos[0] << "y: " << m_camera.m_pos[1] << "z: " << m_camera.m_pos[2] << std::endl;
         updateCameraUniforms();
     }
     update(); // asks for a PaintGL() call to occur

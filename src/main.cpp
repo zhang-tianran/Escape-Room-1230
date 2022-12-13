@@ -19,6 +19,15 @@ int main(int argc, char *argv[]) {
     QSurfaceFormat::setDefaultFormat(fmt);
 
     settings.sceneFilePath = QCoreApplication::arguments().at(1).toStdString();
+    settings.objFilePath = QCoreApplication::arguments().at(2).toStdString();
+    settings.drawSceneGeometry = QCoreApplication::arguments().at(3).toStdString();
+    settings.drawObjMeshes = QCoreApplication::arguments().at(4).toStdString();
+
+    std::cout << "scenefile: " << settings.sceneFilePath << std::endl;
+    std::cout << "objfile: " << settings.objFilePath << std::endl;
+    std::cout << "drawGeometry: " << settings.drawSceneGeometry << std::endl;
+    std::cout << "drawObj: " << settings.drawObjMeshes << std::endl;
+    std::cout << "drawShadows: " << settings.drawShadows << std::endl;
 
     MainWindow w;
     w.initialize();

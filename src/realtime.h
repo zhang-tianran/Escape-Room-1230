@@ -13,7 +13,6 @@
 #include <QTime>
 #include <QTimer>
 
-#include "camera/camera.h"
 #include "utils/sceneparser.h"
 #include "shapes/Cube.h"
 #include "shapes/Sphere.h"
@@ -93,11 +92,13 @@ private:
     GLuint m_depth_shader;
     GLuint m_shadow_fbo;
     GLuint m_depthTexture;
+    bool m_shadowsDrawn = false;
 
     // paint
     void paintGeometry();
     void paintShadows();
     void paintTexture(GLuint texture);
+    void paintObj();
 
     // Scene info
     Camera m_camera;
@@ -115,4 +116,11 @@ private:
     Cone* m_cone;
 
     void setBlurUniforms();
+
+    // Obj
+    std::vector<float> m_vertices;
+    std::vector<int> m_indexes;
+    void loadObjFromFile(std::string filepath);
+    GLuint m_obj_vbo;
+    GLuint m_obj_vao;
 };
