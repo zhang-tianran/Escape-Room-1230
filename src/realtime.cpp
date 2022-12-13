@@ -197,11 +197,9 @@ void Realtime::setShadowUniforms(SceneLightData& light) {
     shadowTransforms.push_back(shadowProj *
                    glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0), glm::vec3(0.0,-1.0, 0.0)));
 
-    auto lightDown = shadowProj *
-                   glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0), glm::vec3(0.0, 0.0,-1.0));
-
     glUniform3fv(glGetUniformLocation(m_depth_shader, "lightPos"), 1, &lightPos[0]);
     glUniform1f(glGetUniformLocation(m_depth_shader, "far_plane"), 25.0f);
+    glUniform1i(glGetUniformLocation(m_depth_shader, "lightId"), light.id);
     for (int i = 0; i < 6; i++) {
         glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, ("shadowMatrices[" + std::to_string(i) + "]").c_str()),
                            1, GL_FALSE, &shadowTransforms[i][0][0]);
@@ -416,12 +414,14 @@ void Realtime::paintTexture(GLuint texture){
 void Realtime::paintShadows() {
     glUseProgram(m_depth_shader);
 
-    setShadowUniforms(m_metaData.lights[0]);
-    for (RenderShapeData &obj: m_metaData.shapes) {
-        // Transformation matrices
-        glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "m_model"), 1, GL_FALSE, &obj.ctm[0][0]);
+    for (int i = 0; i < m_metaData.lights.size(); i++) {
+        setShadowUniforms(m_metaData.lights[i]);
+        for (RenderShapeData &obj: m_metaData.shapes) {
+            // Transformation matrices
+            glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "m_model"), 1, GL_FALSE, &obj.ctm[0][0]);
 
-        drawPrimitive(obj);
+            drawPrimitive(obj);
+        }
     }
 }
 

@@ -85,15 +85,12 @@ private:
     GLuint m_fbo_renderbuffer;
 
     // shadow objects
-    static const int m_numLights = 1;
     void makeShadowFbos();
     void drawDepthMaps();
     void setShadowUniforms(SceneLightData& light);
     GLuint m_depth_shader;
-//    GLuint m_shadow_fbos[m_numLights * 6];
     GLuint m_shadow_fbo;
     GLuint m_depthTexture;
-//    GLuint m_depthTextures[m_numLights * 6];
 
     // paint
     void paintGeometry();
