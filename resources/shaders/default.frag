@@ -38,7 +38,7 @@ uniform float ks;
 
 out vec4 fragColor;
 
-in vec2 uvCoordinate;
+in vec2 uv;
 
 // For shadows
 uniform samplerCubeArray depthMap;

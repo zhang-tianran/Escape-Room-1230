@@ -405,7 +405,7 @@ void Realtime::paintTexture(GLuint texture){
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLES, 0, 8);
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
 }
