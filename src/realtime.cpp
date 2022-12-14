@@ -719,12 +719,13 @@ void Realtime::timerEvent(QTimerEvent *event) {
     if (m_keyMap[Qt::Key_D]) {
         translation += glm::normalize(xDir);
     }
-    if (m_keyMap[Qt::Key_Space]) {
-        translation += glm::normalize(m_camera.m_up);
-    }
-    if (m_keyMap[Qt::Key_Control]) {
-        translation -= glm::normalize(m_camera.m_up);
-    }
+// For some reason, up/down movement results in clipping through the map. reason unknown.
+//    if (m_keyMap[Qt::Key_Space]) {
+//        translation += glm::vec3(0, 1, 0);
+//    }
+//    if (m_keyMap[Qt::Key_Control]) {
+//        translation -= glm::vec3(0, 1, 0);
+//    }
     if (translation != glm::vec3(0.f)) {
         translation *= 5.f * deltaTime;
         //Collision detection aversion: Exact mesh
@@ -766,6 +767,9 @@ void Realtime::timerEvent(QTimerEvent *event) {
 //        }
         if(!collision){
             m_camera.setCamPos(translation);
+            updateCameraUniforms();
+        } else {
+            m_camera.setCamPos(-1.f/10.f * translation);
             updateCameraUniforms();
         }
     }
