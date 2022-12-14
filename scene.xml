@@ -268,6 +268,54 @@
         <position x="-11.670000076293946" y="3.0910189151763918" z="5.086999893188477" />
         <function x="0.8" y="0.6" z="0.5"/>
     </lightdata>
+	
+    <lightdata>
+		<id v="32"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="-16.78999900817871" y="1.9665536880493165" z="-7.613000392913818" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="33"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+		<position x="-16.78999900817871" y="1.9665536880493165" z="-5.873000144958496" />
+		<function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="34"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="-16.78999900817871" y="1.9665536880493165" z="-3.5329999923706056" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="35"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="-16.78999900817871" y="1.9665536880493165" z="-0.5850000381469727" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="36"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="-14.824148178100586" y="2.174999952316284" z="0.5590000152587891" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="37"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="-14.896180152893067" y="2.078200578689575" z="-9.175000190734864" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
 
     <object type="tree" name="root">
 		<transblock>
