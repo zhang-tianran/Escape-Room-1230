@@ -24,6 +24,8 @@ void Realtime::setBlurUniforms(){
 void Realtime::setFxaaUniforms(){
     glUseProgram(m_fxaa_shader);
     glUniform1i(glGetUniformLocation(m_fxaa_shader, "fxaaSampler"), 0);
+    glUniform1i(glGetUniformLocation(m_fxaa_shader, "width"), (float) m_screen_width);
+    glUniform1i(glGetUniformLocation(m_fxaa_shader, "height"), (float) m_screen_height);
     glUseProgram(0);
 }
 
