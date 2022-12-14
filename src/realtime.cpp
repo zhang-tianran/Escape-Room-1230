@@ -128,7 +128,7 @@ void Realtime::initSceneUniforms(){
     glUseProgram(m_shader);
 
     // light
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 38; i++) {
         glUniform1i(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].type").c_str()), 3);
         glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].color").c_str()), 0, 0, 0, 0);
         glUniform4f(glGetUniformLocation(m_shader, ("lightArr[" + std::to_string(i) + "].dir").c_str()), 0, 0, 0, 0);

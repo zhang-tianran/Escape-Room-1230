@@ -13,7 +13,7 @@ struct light
     float angle;
 };
 
-uniform light lightArr[32];
+uniform light lightArr[38];
 
 // Material
 struct Material {
@@ -62,7 +62,7 @@ void main() {
     vec4 diffusion = vec4(0.f);
     vec4 specular = vec4(0.f);
 
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 38; i++) {
 
         if (lightArr[i].type > 2) {
             continue;
