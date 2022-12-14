@@ -779,7 +779,7 @@ void Realtime::timerEvent(QTimerEvent *event) {
                 break;
             }
         }
-        //Collision detection aversion: bounding box
+        //Collision detection aversion:f bounding box
 //        auto pos = m_camera.m_pos + translation;
 //        std::vector<double> bounding_cube{pos[0] - .3, pos[0] + .3, pos[1] - .3, pos[1] + .3, pos[2] - .3, pos[2] + .3};
 //        bool collision = false;
