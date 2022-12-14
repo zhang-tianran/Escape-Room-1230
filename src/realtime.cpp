@@ -91,21 +91,19 @@ std::vector<std::vector<float>> Realtime::ExtractBoundingCubes(){
                                       glm::vec4(0, 1, 0, 0),
                                       glm::vec4(0, 0, 1, 0),
                                       glm::vec4(-26, 0, 0, 1));
-    for (int i = 0; i < m_vertices.size() - 1; i++) {
+    for (int i = 0; i < m_indexes.size() - 1; i++) {
         float max_x = -999999;
         float min_x = 999999;
         float max_y = -999999;
         float min_y = 999999;
         float max_z = -999999;
         float min_z = 999999;
-        auto start = m_vertices.begin() + m_indexes[i] * 6;
-        auto end = m_vertices.begin() + m_indexes[i + 1] * 6;
         std::vector<std::vector<float>> points;
-        for(int j = m_indexes[i]; j < m_indexes[i + 1]; j+=6){
-            points.push_back({m_vertices[j * 6], m_vertices[j * 6 + 1], m_vertices[j * 6 + 2], 1.f});
+        for(int j = m_indexes[i] * 6; j < m_indexes[i + 1] * 6; j+=6){
+            points.push_back({m_vertices[j], m_vertices[j + 1], m_vertices[j + 2]});
         }
         for(int j = 0; j < points.size(); j++){
-            auto wsp = translation * glm::vec4(points[j][0], points[j][1], points[j][2], points[j][3]);
+            auto wsp = translation * glm::vec4(points[j][0], points[j][1], points[j][2], 1.f);
             if(wsp[0] > max_x){
                 max_x = wsp[0];
             }
