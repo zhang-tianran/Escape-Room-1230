@@ -85,6 +85,13 @@ private:
     GLuint m_fxaa_renderbuffer;
     void setFxaaUniforms();
 
+    // dof
+    GLuint m_dof_shader;
+    GLuint m_dof_fbo;
+    GLuint m_dof_texture;
+    GLuint m_dof_renderbuffer;
+    void setDofUniforms();
+
     // shadow objects
     void makeShadowFbos();
     void drawDepthMaps();
@@ -114,8 +121,6 @@ private:
     Sphere* m_sphere;
     Cylinder* m_cylinder;
     Cone* m_cone;
-
-    void setBlurUniforms();
 
     // Obj
     std::vector<float> m_vertices;
