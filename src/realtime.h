@@ -128,4 +128,10 @@ private:
     void loadObjFromFile(std::string filepath);
     GLuint m_obj_vbo;
     GLuint m_obj_vao;
+
+    //Collision Detection
+    std::vector<std::vector<float>> ExtractBoundingCubes();
+    std::vector<std::vector<float>> ExtractTriangleMeshIntersect();
+    std::vector<std::vector<float>> m_bounding_area;
+
 };

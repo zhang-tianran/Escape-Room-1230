@@ -84,6 +84,69 @@ void Realtime::initShapeVertexObjects(){
     glBindVertexArray(0);
 }
 
+//Code for the Axis Alligned Bounding Cubes method
+std::vector<std::vector<float>> Realtime::ExtractBoundingCubes(){
+    std::vector<std::vector<float>> shape_bounds;
+    glm::mat4 translation = glm::mat4(glm::vec4(1, 0, 0, 0),
+                                      glm::vec4(0, 1, 0, 0),
+                                      glm::vec4(0, 0, 1, 0),
+                                      glm::vec4(-26, 0, 0, 1));
+    for (int i = 0; i < m_indexes.size() - 1; i++) {
+        float max_x = -999999;
+        float min_x = 999999;
+        float max_y = -999999;
+        float min_y = 999999;
+        float max_z = -999999;
+        float min_z = 999999;
+        std::vector<std::vector<float>> points;
+        for(int j = m_indexes[i] * 6; j < m_indexes[i + 1] * 6; j+=6){
+            points.push_back({m_vertices[j], m_vertices[j + 1], m_vertices[j + 2]});
+        }
+        for(int j = 0; j < points.size(); j++){
+            auto wsp = translation * glm::vec4(points[j][0], points[j][1], points[j][2], 1.f);
+            if(wsp[0] > max_x){
+                max_x = wsp[0];
+            }
+            if(wsp[0] < min_x){
+                min_x = wsp[0];}
+            if(wsp[1] > max_y){
+                max_y = wsp[1];
+            }
+            if(wsp[1] < min_y){
+                min_y = wsp[1];
+            }
+            if(wsp[2] > max_z){
+                max_z = wsp[2];
+            } if(wsp[2] < min_z){
+                min_z = wsp[2];
+            }
+        }
+        std::vector<float> res = {min_x, max_x, min_y, max_y, min_z, max_z};
+        shape_bounds.push_back(res);
+    }
+    return shape_bounds;
+}
+
+//More precise algorithim. Checks
+std::vector<std::vector<float>> Realtime::ExtractTriangleMeshIntersect(){
+    std::vector<std::vector<float>> shape_bounds;
+    glm::mat4 translation = glm::mat4(glm::vec4(1, 0, 0, 0),
+                                      glm::vec4(0, 1, 0, 0),
+                                      glm::vec4(0, 0, 1, 0),
+                                      glm::vec4(-26, 0, 0, 1));
+    for (int i = 0; i < m_vertices.size() - 1; i+=18) {
+        std::vector<float> points;
+        for(int j = i; j < i + 18; j+=6){
+            glm::vec4 work = translation * glm::vec4(m_vertices[j], m_vertices[j + 1], m_vertices[j + 2], 1.f);
+            points.push_back(work[0]);
+            points.push_back(work[1]);
+            points.push_back(work[2]);
+        }
+        shape_bounds.push_back(points);
+    }
+    return shape_bounds;
+}
+
 void Realtime::drawPrimitive(RenderShapeData& obj) {
     switch(obj.primitive.type) {
         case PrimitiveType::PRIMITIVE_CUBE:
@@ -422,6 +485,11 @@ void Realtime::initializeGL() {
     setFxaaUniforms();
     setDofUniforms();
     makeShadowFbos();
+
+    //Algorithim one: Mesh specific intersection
+    m_bounding_area = ExtractTriangleMeshIntersect();
+    //Algorithim two: Bounding Box collision detect
+//    m_bounding_area = ExtractBoundingCubes();
 }
 
 void Realtime::paintGeometry(){
@@ -656,6 +724,10 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
     }
 }
 
+float signedVolume(glm::vec3 a, glm::vec3 b, glm::vec3 c , glm::vec3 d){
+    return glm::dot(glm::cross(b - d, c - d), (a - d));
+}
+
 void Realtime::timerEvent(QTimerEvent *event) {
     int elapsedms   = m_elapsedTimer.elapsed();
     float deltaTime = elapsedms * 0.001f;
@@ -677,17 +749,59 @@ void Realtime::timerEvent(QTimerEvent *event) {
     if (m_keyMap[Qt::Key_D]) {
         translation += glm::normalize(xDir);
     }
-    if (m_keyMap[Qt::Key_Space]) {
-        translation += glm::normalize(m_camera.m_up);
-    }
-    if (m_keyMap[Qt::Key_Control]) {
-        translation -= glm::normalize(m_camera.m_up);
-    }
+// For some reason, up/down movement results in clipping through the map. reason unknown.
+//    if (m_keyMap[Qt::Key_Space]) {
+//        translation += glm::vec3(0, 1, 0);
+//    }
+//    if (m_keyMap[Qt::Key_Control]) {
+//        translation -= glm::vec3(0, 1, 0);
+//    }
     if (translation != glm::vec3(0.f)) {
         translation *= 5.f * deltaTime;
-        m_camera.setCamPos(translation);
-//        std::cout << "x: " << m_camera.m_pos[0] << "y: " << m_camera.m_pos[1] << "z: " << m_camera.m_pos[2] << std::endl;
-        updateCameraUniforms();
+        //Collision detection aversion: Exact mesh
+        auto p1 = m_camera.m_pos;
+        auto p2 = m_camera.m_pos + 15.f * translation;
+        bool collision = false;
+        for(int i = 0; i < m_bounding_area.size(); i++){
+            auto t1 = glm::vec3(m_bounding_area[i][0], m_bounding_area[i][1], m_bounding_area[i][2]);
+            auto t2 = glm::vec3(m_bounding_area[i][3], m_bounding_area[i][4], m_bounding_area[i][5]);
+            auto t3 = glm::vec3(m_bounding_area[i][6], m_bounding_area[i][7], m_bounding_area[i][8]);
+            //Cross the plane:
+            auto v1 = signedVolume(t1, t2, t3, p1);
+            auto v2 = signedVolume(t1, t2, t3, p2);
+            //Same sign check
+            auto v3 = signedVolume(t1, t2, p1, p2);
+            auto v4 = signedVolume(t2, t3, p1, p2);
+            auto v5 = signedVolume(t3, t1, p1, p2);
+            if(((v1 < 0) != (v2 < 0)) &&
+                    ((v3 < 0) == (v4 < 0) && (v4 < 0) == (v5 < 0))){
+                collision = true;
+                break;
+            }
+        }
+        //Collision detection aversion:f bounding box
+//        auto pos = m_camera.m_pos + translation;
+//        std::vector<double> bounding_cube{pos[0] - .3, pos[0] + .3, pos[1] - .3, pos[1] + .3, pos[2] - .3, pos[2] + .3};
+//        bool collision = false;
+//        for(int i = 0; i < m_bounding_area.size(); i++){
+//            auto bound = m_bounding_area[i];
+//            if(bounding_cube[1] > bound[0] &&
+//                    bounding_cube[0] < bound[1] &&
+//                    bounding_cube[3] > bound[2] &&
+//                    bounding_cube[2] < bound[3] &&
+//                    bounding_cube[5] > bound[4] &&
+//                    bounding_cube[4] < bound[5]){
+//                collision = true;
+//                break;
+//            }
+//        }
+        if(!collision){
+            m_camera.setCamPos(translation);
+            updateCameraUniforms();
+        } else {
+            m_camera.setCamPos(-1.f/10.f * translation);
+            updateCameraUniforms();
+        }
     }
     update(); // asks for a PaintGL() call to occur
 }
