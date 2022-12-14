@@ -12,19 +12,90 @@
 // ================== Project 5: Lights, Camera
 
 void Realtime::setBlurUniforms(){
+//    std::cout << "Error: " << glGetError() << std::endl;
     // Set uniform for kernel-based filter
-//    glUseProgram(m_fxaa_shader);
-//    glm::vec2 dudv = glm::vec2(1.f / size().width(), 1.f / size().height());
-//    glUniform2fv(glGetUniformLocation(m_fxaa_shader, "dudv"), 1, &dudv[0]);
-//    glUseProgram(0);
+    glUseProgram(m_dof_depth_shader);
+    glUniform1i(glGetUniformLocation(m_dof_depth_shader, "dofDepthSampler"), 1);
+    glUseProgram(0);
+
+//    std::cout << "Error: " << glGetError() << std::endl;
+
+    glUseProgram(m_blur_shader);
+    glm::vec2 dudv = glm::vec2(1.f / size().width(), 1.f / size().height());
+    glUniform1i(glGetUniformLocation(m_blur_shader, "blurSampler"), 2);
+    glUniform2fv(glGetUniformLocation(m_blur_shader, "dudv"), 1, &dudv[0]);
+    glUseProgram(0);
+
+//    std::cout << "Error: " << glGetError() << std::endl;
+
 }
+
+void Realtime::setDofUniforms(){
+    // Set uniform for kernel-based filter
+    glUseProgram(m_dof_shader);
+
+    glUniform1i(glGetUniformLocation(m_dof_shader, "focusTexture"), 0);
+    glUniform1i(glGetUniformLocation(m_dof_shader, "outOfFocusTexture"), 1);
+    glUniform2f(glGetUniformLocation(m_dof_shader, "nearfar"), settings.nearPlane, settings.farPlane);
+
+    glUseProgram(0);
+}
+
+void Realtime::makeDofFbo(){
+
+    // texture 0
+    glGenTextures(1, &m_dof_texture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_dof_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_dof_texture, 0);
+
+    // texture 1
+    glGenTextures(1, &m_blur_texture);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_blur_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenTextures(1, &m_dof_final);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_dof_final);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenRenderbuffers(1, &m_dof_renderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_dof_renderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_fbo_width, m_fbo_height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // Generate and bind an FBO
+    glGenFramebuffers(1, &m_dof_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_dof_fbo);
+
+    // Add texture as a color attachment, and our renderbuffer as a depth+stencil attachment, to our FBO
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_dof_renderbuffer);
+
+//    GLenum e = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+//    if (e != GL_FRAMEBUFFER_COMPLETE)
+//    printf("There is a problem with the FBO\n");
+
+    // Unbind the FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 
 void Realtime::setFxaaUniforms(){
     glUseProgram(m_fxaa_shader);
     glUniform1i(glGetUniformLocation(m_fxaa_shader, "fxaaSampler"), 0);
     glUseProgram(0);
 }
-
 
 void Realtime::updateShapeParameter(){
     m_cube->updateParams(std::max(1, settings.shapeParameter1));
@@ -220,38 +291,37 @@ void Realtime::setShadowUniforms(SceneLightData& light) {
     }
 }
 
-void Realtime::makeFbo(GLuint& fbo, GLuint& texture, GLuint& renderbuffer){
-
+void Realtime::makeFxaaFbo(){
     // Generate and bind an empty texture, set its min/mag filter interpolation, then unbind
-    glGenTextures(1, &texture);
+    glGenTextures(1, &m_fxaa_texture);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, m_fxaa_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // Generate and bind a renderbuffer of the right size, set its format, then unbind
-    glGenRenderbuffers(1, &renderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+    glGenRenderbuffers(1, &m_fxaa_renderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_fxaa_renderbuffer);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_fbo_width, m_fbo_height);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     // Generate and bind an FBO
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glGenFramebuffers(1, &m_fxaa_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fxaa_fbo);
 
     // Add texture as a color attachment, and our renderbuffer as a depth+stencil attachment, to our FBO
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_fxaa_texture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_fxaa_renderbuffer);
 
     // Unbind the FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Realtime::initFbo(){
     // height and width data
-    m_defaultFBO = 3;
+    m_defaultFBO = 4;
     m_screen_width = size().width() * m_devicePixelRatio;
     m_screen_height = size().height() * m_devicePixelRatio;
     m_fbo_width = m_screen_width;
@@ -362,7 +432,9 @@ void Realtime::initializeGL() {
 
     m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_fxaa_shader = ShaderLoader::createShaderProgram(":/resources/shaders/fxaa.vert", ":/resources/shaders/fxaa.frag");
-//    m_depth_shader = ShaderLoader::createShaderProgram(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag");
+    m_blur_shader = ShaderLoader::createShaderProgram(":/resources/shaders/blur.vert", ":/resources/shaders/blur.frag");
+    m_dof_depth_shader = ShaderLoader::createShaderProgram(":/resources/shaders/dof_depth.vert", ":/resources/shaders/dof_depth.frag");
+    m_dof_shader = ShaderLoader::createShaderProgram(":/resources/shaders/dof.vert", ":/resources/shaders/dof.frag");
     m_depth_shader = ShaderLoader::createShaderProgramWithGeometry(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag", ":/resources/shaders/depth.geom");
 
     // Vao/Vbo
@@ -378,9 +450,15 @@ void Realtime::initializeGL() {
 
     // Fbo
     initFbo();
-    makeFbo(m_fxaa_fbo, m_fxaa_texture, m_fxaa_renderbuffer);
-    setFxaaUniforms();
+    makeFxaaFbo();
+    makeDofFbo();
     makeShadowFbos();
+//    std::cout << "Error: " << glGetError() << std::endl;
+    setFxaaUniforms();
+    setBlurUniforms();
+//    std::cout << "Error: " << glGetError() << std::endl;
+    setDofUniforms();
+//    std::cout << "Error: " << glGetError() << std::endl;
 }
 
 void Realtime::paintGeometry(){
@@ -405,10 +483,9 @@ void Realtime::paintGeometry(){
     }
 }
 
-void Realtime::paintTexture(GLuint texture){
+void Realtime::paintTexture(GLuint& texture, int i){
     glBindVertexArray(m_fullscreen_vao);
-
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0 + i);
     glBindTexture(GL_TEXTURE_2D, texture);
 
     glDrawArrays(GL_TRIANGLES, 0, 8);
@@ -424,36 +501,79 @@ void Realtime::paintShadows() {
         for (RenderShapeData &obj: m_metaData.shapes) {
             // Transformation matrices
             glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "m_model"), 1, GL_FALSE, &obj.ctm[0][0]);
-
             drawPrimitive(obj);
         }
     }
 }
 
 void Realtime::paintGL() {
+    // shadow
     glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
     glViewport(0, 0, settings.mapSize, settings.mapSize);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // paint shadows
     glUseProgram(m_depth_shader);
     paintShadows();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fxaa_fbo);
+    // Base geometry
+    glBindFramebuffer(GL_FRAMEBUFFER, m_dof_fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_dof_texture, 0);
     glViewport(0, 0, m_fbo_width, m_fbo_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // paint geometry
     glUseProgram(m_shader);
     paintGeometry();
 
+    // depth of field
+
+    glUseProgram(m_dof_depth_shader);
+    paintTexture(m_dof_texture, 1);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_blur_texture, 0);
+    glUseProgram(m_blur_shader);
+    paintTexture(m_blur_texture, 2);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_dof_final, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fxaa_fbo);
+    glViewport(0, 0, m_screen_width, m_screen_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+//    glUseProgram(m_dof_depth_shader);
+//    paintTexture(m_dof_texture, 0);
+
+//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_blur_texture, 0);
+//    glUseProgram(m_blur_shader);
+//    paintTexture(m_dof_texture, 1);
+
+//    glUseProgram(m_dof_shader);
+//    paintTexture(m_dof_final, 0);
+
+
+//    glUseProgram(m_dof_depth_shader);
+//    paintTexture(m_dof_texture, 0);
+
+    glUseProgram(m_dof_shader);
+    glBindVertexArray(m_fullscreen_vao);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_dof_texture);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_blur_texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_dof_final);
+
+    glDrawArrays(GL_TRIANGLES, 0, 8);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
+
+//    std::cout << glGetError() << std::endl;
+
+    // fxaa
     glUseProgram(m_fxaa_shader);
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
     glViewport(0, 0, m_screen_width, m_screen_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    paintTexture(m_fxaa_texture, 0);
 
-    // paint texture
-    paintTexture(m_fxaa_texture);
     glUseProgram(0);
 }
 
@@ -474,7 +594,8 @@ void Realtime::resizeGL(int w, int h) {
     m_fbo_width = m_screen_width;
     m_fbo_height = m_screen_height;
 
-    makeFbo(m_fxaa_fbo, m_fxaa_texture, m_fxaa_renderbuffer);
+    makeFxaaFbo();
+    makeDofFbo();
 
     m_camera.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
     updateCameraUniforms();

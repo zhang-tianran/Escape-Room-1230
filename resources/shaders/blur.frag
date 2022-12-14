@@ -9,7 +9,7 @@ out vec4 fragColor;
 
 void main()
 {
-    int kernal_size = 3;
+    int kernal_size = 5;
     vec3 newColor = vec3(0.f);
     for (int i = kernal_size - 1; i >= 0; i--) {
         for (int j = kernal_size - 1; j >= 0; j--) {

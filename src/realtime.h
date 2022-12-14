@@ -74,7 +74,6 @@ private:
 
     //fbo
     void initFbo();
-    void makeFbo(GLuint& fbo, GLuint& texture, GLuint& renderbuffer);
     void deleteFbo();
     GLuint m_fullscreen_vbo;
     GLuint m_fullscreen_vao;
@@ -85,6 +84,23 @@ private:
     GLuint m_fxaa_texture;
     GLuint m_fxaa_renderbuffer;
     void setFxaaUniforms();
+    void makeFxaaFbo();
+
+    //depth of field
+    //shader
+    GLuint m_blur_shader;
+    GLuint m_dof_shader;
+    GLuint m_dof_depth_shader;
+    //texture
+    GLuint m_blur_texture;
+    GLuint m_dof_texture;
+    GLuint m_dof_final;
+    //buffer
+    GLuint m_dof_fbo;
+    GLuint m_dof_renderbuffer;
+    void makeDofFbo();
+    void setBlurUniforms();
+    void setDofUniforms();
 
     // shadow objects
     void makeShadowFbos();
@@ -97,7 +113,7 @@ private:
     // paint
     void paintGeometry();
     void paintShadows();
-    void paintTexture(GLuint texture);
+    void paintTexture(GLuint& texture, int i);
 
     // Scene info
     Camera m_camera;
@@ -113,6 +129,4 @@ private:
     Sphere* m_sphere;
     Cylinder* m_cylinder;
     Cone* m_cone;
-
-    void setBlurUniforms();
 };
