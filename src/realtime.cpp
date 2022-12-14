@@ -13,19 +13,19 @@
 
 // ================== Project 5: Lights, Camera
 
-void Realtime::setBlurUniforms(){
-    // Set uniform for kernel-based filter
-//    glUseProgram(m_fxaa_shader);
-//    glm::vec2 dudv = glm::vec2(1.f / size().width(), 1.f / size().height());
-//    glUniform2fv(glGetUniformLocation(m_fxaa_shader, "dudv"), 1, &dudv[0]);
-//    glUseProgram(0);
-}
-
 void Realtime::setFxaaUniforms(){
     glUseProgram(m_fxaa_shader);
     glUniform1i(glGetUniformLocation(m_fxaa_shader, "fxaaSampler"), 0);
     glUniform1i(glGetUniformLocation(m_fxaa_shader, "width"), (float) m_screen_width);
     glUniform1i(glGetUniformLocation(m_fxaa_shader, "height"), (float) m_screen_height);
+    glUseProgram(0);
+}
+
+void Realtime::setDofUniforms(){
+    glUseProgram(m_dof_shader);
+    glUniform1i(glGetUniformLocation(m_dof_shader, "dofSampler"), 0);
+    glm::vec2 dudv = glm::vec2(1.f / size().width(), 1.f / size().height());
+    glUniform2fv(glGetUniformLocation(m_dof_shader, "dudv"), 1, &dudv[0]);
     glUseProgram(0);
 }
 
@@ -268,7 +268,7 @@ void Realtime::makeFbo(GLuint& fbo, GLuint& texture, GLuint& renderbuffer){
 
 void Realtime::initFbo(){
     // height and width data
-    m_defaultFBO = 3;
+    m_defaultFBO = 4;
     m_screen_width = size().width() * m_devicePixelRatio;
     m_screen_height = size().height() * m_devicePixelRatio;
     m_fbo_width = m_screen_width;
@@ -336,8 +336,10 @@ void Realtime::finish() {
         glDeleteBuffers(1, &m_vbos[i]);
         glDeleteVertexArrays(1, &m_vaos[i]);
     }
+
     deleteFbo();
     glDeleteProgram(m_shader);
+    glDeleteProgram(m_dof_shader);
     glDeleteProgram(m_fxaa_shader);
     glDeleteProgram(m_depth_shader);
 
@@ -381,6 +383,7 @@ void Realtime::initializeGL() {
 
     m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_fxaa_shader = ShaderLoader::createShaderProgram(":/resources/shaders/fxaa.vert", ":/resources/shaders/fxaa.frag");
+    m_dof_shader = ShaderLoader::createShaderProgram(":/resources/shaders/dof.vert", ":/resources/shaders/dof.frag");
     m_depth_shader = ShaderLoader::createShaderProgramWithGeometry(":/resources/shaders/depth.vert", ":/resources/shaders/depth.frag", ":/resources/shaders/depth.geom");
 
     // Vao/Vbo
@@ -409,10 +412,15 @@ void Realtime::initializeGL() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+//        std::cout << "Error: " << glGetError() << std::endl;
+
     // Fbo
     initFbo();
     makeFbo(m_fxaa_fbo, m_fxaa_texture, m_fxaa_renderbuffer);
+//    std::cout << "Error: " << glGetError() << std::endl;
+    makeFbo(m_dof_fbo, m_dof_texture, m_dof_renderbuffer);
     setFxaaUniforms();
+    setDofUniforms();
     makeShadowFbos();
 }
 
@@ -511,7 +519,7 @@ void Realtime::paintGL() {
         m_shadowsDrawn = true;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fxaa_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_dof_fbo);
     glViewport(0, 0, m_fbo_width, m_fbo_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -523,6 +531,27 @@ void Realtime::paintGL() {
     if (settings.drawObjMeshes == "true") {
         paintObj();
     }
+
+    glUseProgram(m_dof_shader);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fxaa_fbo);
+    glViewport(0, 0, m_screen_width, m_screen_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    paintTexture(m_dof_texture);
+
+//    glUseProgram(0);
+
+//    glBindFramebuffer(GL_FRAMEBUFFER, m_fxaa_fbo);
+//    glViewport(0, 0, m_fbo_width, m_fbo_height);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+//    // paint geometry
+//    glUseProgram(m_shader);
+//    if (settings.drawSceneGeometry == "true") {
+//        paintGeometry();
+//    }
+//    if (settings.drawObjMeshes == "true") {
+//        paintObj();
+//    }
 
     glUseProgram(m_fxaa_shader);
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
@@ -552,6 +581,7 @@ void Realtime::resizeGL(int w, int h) {
     m_fbo_height = m_screen_height;
 
     makeFbo(m_fxaa_fbo, m_fxaa_texture, m_fxaa_renderbuffer);
+    makeFbo(m_dof_fbo, m_dof_texture, m_dof_renderbuffer);
 
     m_camera.setCamWindow(settings.farPlane, settings.nearPlane, (float) width() / height());
     updateCameraUniforms();
