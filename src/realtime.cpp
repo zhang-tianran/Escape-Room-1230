@@ -101,7 +101,7 @@ std::vector<std::vector<float>> Realtime::ExtractBoundingCubes(){
     glm::mat4 translation = glm::mat4(glm::vec4(1, 0, 0, 0),
                                       glm::vec4(0, 1, 0, 0),
                                       glm::vec4(0, 0, 1, 0),
-                                      glm::vec4(-26, 0, 0, 1));
+                                      glm::vec4(0, 0, 0, 1));
     for (int i = 0; i < m_indexes.size() - 1; i++) {
         float max_x = -999999;
         float min_x = 999999;
@@ -144,7 +144,7 @@ std::vector<std::vector<float>> Realtime::ExtractTriangleMeshIntersect(){
     glm::mat4 translation = glm::mat4(glm::vec4(1, 0, 0, 0),
                                       glm::vec4(0, 1, 0, 0),
                                       glm::vec4(0, 0, 1, 0),
-                                      glm::vec4(-26, 0, 0, 1));
+                                      glm::vec4(0, 0, 0, 1));
     for (int i = 0; i < m_vertices.size() - 1; i+=30) {
         std::vector<float> points;
         for(int j = i; j < i + 30; j+=10){
@@ -534,7 +534,7 @@ void Realtime::paintObj() {
     glm::mat4 translation = glm::mat4(glm::vec4(1, 0, 0, 0),
                                       glm::vec4(0, 1, 0, 0),
                                       glm::vec4(0, 0, 1, 0),
-                                      glm::vec4(-26, 0, 0, 1));
+                                      glm::vec4(0, 0, 0, 1));
 
     glm::mat4 ctm = translation;
     glm::mat3 inv = inverse(transpose(glm::mat3(ctm)));
@@ -581,7 +581,7 @@ void Realtime::paintShadows() {
             glm::mat4 translation = glm::mat4(glm::vec4(1, 0, 0, 0),
                                               glm::vec4(0, 1, 0, 0),
                                               glm::vec4(0, 0, 1, 0),
-                                              glm::vec4(-26, 0, 0, 1));
+                                              glm::vec4(0, 0, 0, 1));
 
             glm::mat4 ctm = translation;
             glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "m_model"), 1, GL_FALSE, &ctm[0][0]);

@@ -6,8 +6,8 @@
     </globaldata>
 
 	<cameradata>
-		<pos x="-15" y="1.5" z="-30"/>
-		<focus x="-15" y="1.5" z="-29"/>
+		<pos x="10" y="1.5" z="-30"/>
+		<focus x="10" y="1.5" z="-29"/>
 		<up x="0" y="1" z="0"/>
 		<heightangle v="30"/>
 	</cameradata>
