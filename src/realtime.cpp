@@ -541,7 +541,7 @@ void Realtime::paintObj() {
     glUniformMatrix4fv(glGetUniformLocation(m_shader, "m_model"), 1, GL_FALSE, &ctm[0][0]);
     glUniformMatrix3fv(glGetUniformLocation(m_shader, "m_norm"), 1, GL_FALSE, &inv[0][0]);
 
-    glUniform4f(glGetUniformLocation(m_shader, "material.cAmbient"), 0, 0, 0, 0);
+    glUniform4f(glGetUniformLocation(m_shader, "material.cAmbient"), 0.1, 0.1, 0.1, 0.1);
     glUniform4f(glGetUniformLocation(m_shader, "material.cDiffuse"), 1, 1, 1, 1);
     glUniform4f(glGetUniformLocation(m_shader, "material.cSpecular"), 0, 0, 0, 0);
     glUniform1f(glGetUniformLocation(m_shader, "material.shininess"), 0);
@@ -799,7 +799,7 @@ void Realtime::timerEvent(QTimerEvent *event) {
         translation *= 5.f * deltaTime;
         //Collision detection aversion: Exact mesh
         auto p1 = m_camera.m_pos;
-        auto p2 = m_camera.m_pos + 15.f * translation;
+        auto p2 = m_camera.m_pos + 5.f * translation;
         bool collision = false;
         if (m_keyMap[Qt::Key_4]) {
             for(int i = 0; i < m_bounding_area.size(); i++){
