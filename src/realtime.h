@@ -134,4 +134,6 @@ private:
     std::vector<std::vector<float>> ExtractTriangleMeshIntersect();
     std::vector<std::vector<float>> m_bounding_area;
 
+    void setKeyUniforms();
+
 };

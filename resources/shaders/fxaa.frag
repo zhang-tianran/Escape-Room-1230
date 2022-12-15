@@ -15,8 +15,15 @@ float luma(vec3 color){
 
 vec2 UV = uv;
 
+uniform bool enableFxaa;
+
 void main()
 {
+    if (!enableFxaa) {
+        fragColor = texture(fxaaSampler, UV);
+        return;
+    }
+
     vec4 centerColor = texture(fxaaSampler, UV);
     vec4 upColor = texture(fxaaSampler, vec2(UV[0], UV[1] - 1));
     vec4 downColor = texture(fxaaSampler, vec2(UV[0], UV[1] + 1));
