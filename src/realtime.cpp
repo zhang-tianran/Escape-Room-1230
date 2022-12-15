@@ -99,7 +99,7 @@ std::vector<std::vector<float>> Realtime::ExtractBoundingCubes(){
         float max_z = -999999;
         float min_z = 999999;
         std::vector<std::vector<float>> points;
-        for(int j = m_indexes[i] * 6; j < m_indexes[i + 1] * 6; j+=6){
+        for(int j = m_indexes[i] * 10; j < m_indexes[i + 1] * 10; j+=10){
             points.push_back({m_vertices[j], m_vertices[j + 1], m_vertices[j + 2]});
         }
         for(int j = 0; j < points.size(); j++){
@@ -134,9 +134,9 @@ std::vector<std::vector<float>> Realtime::ExtractTriangleMeshIntersect(){
                                       glm::vec4(0, 1, 0, 0),
                                       glm::vec4(0, 0, 1, 0),
                                       glm::vec4(-26, 0, 0, 1));
-    for (int i = 0; i < m_vertices.size() - 1; i+=18) {
+    for (int i = 0; i < m_vertices.size() - 1; i+=30) {
         std::vector<float> points;
-        for(int j = i; j < i + 18; j+=6){
+        for(int j = i; j < i + 30; j+=10){
             glm::vec4 work = translation * glm::vec4(m_vertices[j], m_vertices[j + 1], m_vertices[j + 2], 1.f);
             points.push_back(work[0]);
             points.push_back(work[1]);
@@ -470,8 +470,10 @@ void Realtime::initializeGL() {
     glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(float), m_vertices.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(0));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), reinterpret_cast<void *>(0));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), reinterpret_cast<void *>(6 * sizeof(GLfloat)));
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
@@ -528,7 +530,7 @@ void Realtime::paintObj() {
     glUniform4f(glGetUniformLocation(m_shader, "material.cSpecular"), 0, 0, 0, 0);
     glUniform1f(glGetUniformLocation(m_shader, "material.shininess"), 0);
 
-    glDrawArrays(GL_TRIANGLES, 0, m_vertices.size() / 6);
+    glDrawArrays(GL_TRIANGLES, 0, m_vertices.size() / 10);
 }
 
 void Realtime::paintTexture(GLuint texture){
@@ -569,7 +571,7 @@ void Realtime::paintShadows() {
             glUniformMatrix4fv(glGetUniformLocation(m_depth_shader, "m_model"), 1, GL_FALSE, &ctm[0][0]);
 
             glBindVertexArray(m_obj_vao);
-            glDrawArrays(GL_TRIANGLES, 0, m_vertices.size() / 6);
+            glDrawArrays(GL_TRIANGLES, 0, m_vertices.size() / 10);
         }
     }
 }

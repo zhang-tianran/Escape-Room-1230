@@ -42,6 +42,9 @@ out vec4 fragColor;
 uniform samplerCubeArray depthMap;
 uniform float far_plane;
 
+// Color
+in vec4 matDiffuse;
+
 float shadowValue(vec3 pos, int lightId) {
     vec3 lightVec = pos - vec3(lightArr[lightId].pos);
     float closestDepth = texture(depthMap, vec4(lightVec, float(lightId))).r * far_plane;
@@ -78,7 +81,7 @@ void main() {
         }
 
         // Diffusion and specular
-        vec4 temp_d = kd * material.cDiffuse * lightArr[i].color * clamp(dot(-lightDir, worldNormNormalized), 0.0, 1.0);
+        vec4 temp_d = kd * matDiffuse * lightArr[i].color * clamp(dot(-lightDir, worldNormNormalized), 0.0, 1.0);
         vec4 temp_s = vec4(0.f);
         if (material.shininess > 0) {
             vec4 reflectDir = normalize(reflect(-lightDir, worldNormNormalized));
