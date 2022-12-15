@@ -16,6 +16,7 @@
 void Realtime::setFxaaUniforms(){
     glUseProgram(m_fxaa_shader);
     glUniform1i(glGetUniformLocation(m_fxaa_shader, "fxaaSampler"), 0);
+    glUniform1i(glGetUniformLocation(m_fxaa_shader, "enableFxaa"), m_keyMap[Qt::Key_1]);
     glUniform1i(glGetUniformLocation(m_fxaa_shader, "width"), (float) m_screen_width);
     glUniform1i(glGetUniformLocation(m_fxaa_shader, "height"), (float) m_screen_height);
     glUseProgram(0);
@@ -24,8 +25,18 @@ void Realtime::setFxaaUniforms(){
 void Realtime::setDofUniforms(){
     glUseProgram(m_dof_shader);
     glUniform1i(glGetUniformLocation(m_dof_shader, "dofSampler"), 0);
+    glUniform1i(glGetUniformLocation(m_fxaa_shader, "enableDof"), m_keyMap[Qt::Key_2]);
     glm::vec2 dudv = glm::vec2(1.f / size().width(), 1.f / size().height());
     glUniform2fv(glGetUniformLocation(m_dof_shader, "dudv"), 1, &dudv[0]);
+    glUseProgram(0);
+}
+
+void Realtime::setKeyUniforms(){
+    glUseProgram(m_fxaa_shader);
+    glUniform1i(glGetUniformLocation(m_fxaa_shader, "enableFxaa"), m_keyMap[Qt::Key_1]);
+    glUseProgram(0);
+    glUseProgram(m_dof_shader);
+    glUniform1i(glGetUniformLocation(m_dof_shader, "enableDof"), m_keyMap[Qt::Key_2]);
     glUseProgram(0);
 }
 
@@ -378,6 +389,10 @@ Realtime::Realtime(QWidget *parent)
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
 
+    m_keyMap[Qt::Key_1]       = true;
+    m_keyMap[Qt::Key_2]       = true;
+    m_keyMap[Qt::Key_3]       = false;
+    m_keyMap[Qt::Key_4]       = true;
     m_keyMap[Qt::Key_W]       = false;
     m_keyMap[Qt::Key_A]       = false;
     m_keyMap[Qt::Key_S]       = false;
@@ -487,6 +502,7 @@ void Realtime::initializeGL() {
     setFxaaUniforms();
     setDofUniforms();
     makeShadowFbos();
+    setKeyUniforms();
 
     //Algorithim one: Mesh specific intersection
     m_bounding_area = ExtractTriangleMeshIntersect();
@@ -577,16 +593,18 @@ void Realtime::paintShadows() {
 }
 
 void Realtime::paintGL() {
-    if (!m_shadowsDrawn) {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
-        glViewport(0, 0, settings.mapSize, settings.mapSize);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    if (m_keyMap[Qt::Key_3]) {
+        if (!m_shadowsDrawn) {
+            glBindFramebuffer(GL_FRAMEBUFFER, m_shadow_fbo);
+            glViewport(0, 0, settings.mapSize, settings.mapSize);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // paint shadows
-        glUseProgram(m_depth_shader);
-        paintShadows();
+            // paint shadows
+            glUseProgram(m_depth_shader);
+            paintShadows();
 
-        m_shadowsDrawn = true;
+            m_shadowsDrawn = true;
+        }
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_dof_fbo);
@@ -684,11 +702,30 @@ void Realtime::settingsChanged() {
 // ================== Project 6: Action!
 
 void Realtime::keyPressEvent(QKeyEvent *event) {
-    m_keyMap[Qt::Key(event->key())] = true;
+
+    if (Qt::Key(event->key()) == (Qt::Key_1) ||
+        Qt::Key(event->key()) == (Qt::Key_2) ||
+        Qt::Key(event->key()) == (Qt::Key_3) ||
+        Qt::Key(event->key()) == (Qt::Key_4)) {
+
+        m_keyMap[Qt::Key(event->key())] = !m_keyMap[Qt::Key(event->key())];
+        setKeyUniforms();
+
+    } else {
+        m_keyMap[Qt::Key(event->key())] = true;
+    }
 }
 
 void Realtime::keyReleaseEvent(QKeyEvent *event) {
-    m_keyMap[Qt::Key(event->key())] = false;
+
+    if (Qt::Key(event->key()) == (Qt::Key_1) ||
+        Qt::Key(event->key()) == (Qt::Key_2) ||
+        Qt::Key(event->key()) == (Qt::Key_3) ||
+        Qt::Key(event->key()) == (Qt::Key_4)) {
+
+    } else {
+        m_keyMap[Qt::Key(event->key())] = false;
+    }
 }
 
 void Realtime::mousePressEvent(QMouseEvent *event) {
@@ -764,21 +801,23 @@ void Realtime::timerEvent(QTimerEvent *event) {
         auto p1 = m_camera.m_pos;
         auto p2 = m_camera.m_pos + 15.f * translation;
         bool collision = false;
-        for(int i = 0; i < m_bounding_area.size(); i++){
-            auto t1 = glm::vec3(m_bounding_area[i][0], m_bounding_area[i][1], m_bounding_area[i][2]);
-            auto t2 = glm::vec3(m_bounding_area[i][3], m_bounding_area[i][4], m_bounding_area[i][5]);
-            auto t3 = glm::vec3(m_bounding_area[i][6], m_bounding_area[i][7], m_bounding_area[i][8]);
-            //Cross the plane:
-            auto v1 = signedVolume(t1, t2, t3, p1);
-            auto v2 = signedVolume(t1, t2, t3, p2);
-            //Same sign check
-            auto v3 = signedVolume(t1, t2, p1, p2);
-            auto v4 = signedVolume(t2, t3, p1, p2);
-            auto v5 = signedVolume(t3, t1, p1, p2);
-            if(((v1 < 0) != (v2 < 0)) &&
-                    ((v3 < 0) == (v4 < 0) && (v4 < 0) == (v5 < 0))){
-                collision = true;
-                break;
+        if (m_keyMap[Qt::Key_4]) {
+            for(int i = 0; i < m_bounding_area.size(); i++){
+                auto t1 = glm::vec3(m_bounding_area[i][0], m_bounding_area[i][1], m_bounding_area[i][2]);
+                auto t2 = glm::vec3(m_bounding_area[i][3], m_bounding_area[i][4], m_bounding_area[i][5]);
+                auto t3 = glm::vec3(m_bounding_area[i][6], m_bounding_area[i][7], m_bounding_area[i][8]);
+                //Cross the plane:
+                auto v1 = signedVolume(t1, t2, t3, p1);
+                auto v2 = signedVolume(t1, t2, t3, p2);
+                //Same sign check
+                auto v3 = signedVolume(t1, t2, p1, p2);
+                auto v4 = signedVolume(t2, t3, p1, p2);
+                auto v5 = signedVolume(t3, t1, p1, p2);
+                if(((v1 < 0) != (v2 < 0)) &&
+                        ((v3 < 0) == (v4 < 0) && (v4 < 0) == (v5 < 0))){
+                    collision = true;
+                    break;
+                }
             }
         }
         //Collision detection aversion:f bounding box

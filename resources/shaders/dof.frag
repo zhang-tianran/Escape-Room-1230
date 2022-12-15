@@ -5,6 +5,8 @@ uniform vec2 dudv;
 in vec2 uv;
 in vec4 pos;
 
+uniform bool enableDof;
+
 out vec4 fragColor;
 
 vec4 convolve(int kernal_size) {
@@ -20,6 +22,11 @@ vec4 convolve(int kernal_size) {
 }
 
 void main() {
+
+if (!enableDof) {
+    fragColor = texture(dofSampler, uv);
+    return;
+}
 
   vec4 focusColor = texture(dofSampler, uv);
 
