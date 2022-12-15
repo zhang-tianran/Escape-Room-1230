@@ -1,0 +1,352 @@
+<scenefile>
+	<globaldata>
+		<diffusecoeff v="0.5"/>
+		<specularcoeff v="0.5"/>
+		<ambientcoeff v="0.5"/>
+    </globaldata>
+
+	<cameradata>
+		<pos x="-15" y="1.5" z="-30"/>
+		<focus x="-15" y="1.5" z="-29"/>
+		<up x="0" y="1" z="0"/>
+		<heightangle v="30"/>
+	</cameradata>
+
+    <lightdata>
+		<id v="0"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+    <position x="13.18582" y="3.758522" z="-26.73108"/>
+    <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+    
+    <lightdata>
+		<id v="1"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+		<position x="13.1847" y="3.761621" z="-26.74451"/>
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="2"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+		<position x="13.5617" y="3.76" z="-26.367"/>
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="3"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+		<position x="13.56" y="3.7616" z="-25.84"/>
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="4"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+		<position x="13.18" y="3.7616" z="-25.47"/>
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="5"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="12.66" y="3.67" z="-25.466"/>
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="6"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="12.286" y="3.76" z="-25.8375"/>
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="7"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="12.29" y="3.76" z="-26.37"/>
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="8"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="9.449" y="3.425" z="-18.72"/>
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="9"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="10.97" y="2.343" z="-9.799"/>
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="10"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="16.61" y="3.425" z="-14.723" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="11"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="16.61" y="3.425" z="-18.73" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="12"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="9.45" y="3.425" z="-11.327" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="13"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="16.6" y="3.425" z="-11.3328" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="14"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="9.449" y="3.425" z="-14.717" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="15"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="14.79" y="2.323" z="-9.799" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="16"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="9.45" y="3.4248" z="-14.72" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="17"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="14.79" y="2.323" z="-9.799" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="18"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="-16.612001419067384" y="3.4316928386688234" z="-11.329999923706055" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="19"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="11.83588" y="3.055" z="12.203" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="20"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="14.59988" y="3.055" z="7.477" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="21"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="9.28712" y="2.019" z="-5.177" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="22"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="16.90788" y="1.93" z="-5.8728" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="23"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="14.824" y="2.139" z="0.576878" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="24"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="16.80788" y="1.93067" z="-0.5848" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="25"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="10.69" y="2.13" z="0.57687" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="26"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="16.807" y="1.9306" z="-3.5328" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="27"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="11.836" y="3.055" z="12.204" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="28"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="10.98" y="1.99" z="-9.19" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="29"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="14.599" y="3.055" z="5.08" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="30"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="14.896" y="2.0423" z="-9.1929" />
+        <function x="0.8" y="0.6" z="0.5"/>
+	</lightdata>
+
+    <lightdata>
+		<id v="31"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="9.287" y="2.019" z="-7.057" />
+        <function x="0.8" y="0.6" z="0.5"/>
+    </lightdata>
+	
+    <lightdata>
+		<id v="32"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="9.287" y="2.019" z="-0.977" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="33"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+		<position x="11.652" y="3.055" z="5.0868" />
+		<function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="34"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="14.293" y="3.055" z="12.204" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="35"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="16.8" y="1.93" z="-7.613" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="36"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="11.65" y="3.055" z="7.1928" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="37"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="9.287" y="2.019" z="-3.057" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="38"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="24.9467" y="7.556" z="-52.55" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="39"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="12.286" y="3.758" z="-25.8" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="40"/>
+		<type v="point"/>
+		<color r="0.953" g="0.82" b="0.455"/>
+        <position x="9.287" y="2.019" z="-3.057" />
+        <function x="0.8" y="0.2" z="0.0"/>
+    </lightdata>
+
+    <object type="tree" name="root">
+		<transblock>
+			<translate x="0" y="-0.6" z="0"/>
+			<scale x="100" y="0.1" z="100"/>
+			<object type="primitive" name="cube" >
+				<diffuse r="0.1" g="0.4" b="0.8"/>
+			</object>
+		</transblock>
+    </object>
+</scenefile>
