@@ -1,4 +1,4 @@
-# Project Realtime
+# Escape Room 1230
 
 ![demo image 1](https://github.com/zhang-tianran/Escape-Room-1230/blob/main/assets/img1.png)
 ![demo image 2](https://github.com/zhang-tianran/Escape-Room-1230/blob/main/assets/img2.png)
